@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - ระบบจัดการหลังบ้าน</title>
+    @vite(['resources/css/app.css'])
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
+    
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border-t-4 border-gray-800">
+        
+        <div class="text-center mb-8">
+            <h2 class="text-2xl font-bold text-gray-800">🛠️ Admin Portal</h2>
+            <p class="text-sm text-gray-500 mt-2">ระบบจัดการบริการรับ-ส่งซักผ้า</p>
+        </div>
+
+        <form action="{{ route('admin.login') }}" method="POST" class="space-y-5">
+            @csrf
+            
+            @if($errors->any())
+                <div class="bg-red-50 text-red-500 text-sm p-3 rounded-lg border border-red-200 text-center">
+                    {{ $errors->first() }}
+                </div>
+            @endif
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Username (รหัสพนักงาน)</label>
+                <input type="text" name="username" value="{{ old('username') }}" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-800 focus:outline-none transition-all">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Password (รหัสผ่าน)</label>
+                <input type="password" name="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-800 focus:outline-none transition-all">
+            </div>
+
+            <button type="submit" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-medium py-3 rounded-lg shadow-md hover:shadow-lg transition-all mt-4">
+                เข้าสู่ระบบหลังบ้าน
+            </button>
+        </form>
+
+        <div class="mt-6 text-center">
+            <a href="/login" class="text-sm text-gray-400 hover:text-gray-600 hover:underline transition-all">
+                ← กลับไปหน้าเข้าสู่ระบบลูกค้า
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

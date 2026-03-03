@@ -1,0 +1,15 @@
+/* นำเข้าฟอนต์ Mitr จาก Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500&display=swap');
+
+/* เรียกใช้งาน Tailwind v4 */
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+/* ตั้งค่าธีมสีและฟอนต์ของเราตรงนี้เลย (v4 ใช้ @theme แบบนี้ครับ) */
+@theme {
+  --font-sans: 'Mitr', sans-serif;
+  --color-cute-bg: #FFF0F5;
+  --color-cute-primary: #FFB6C1;
+  --color-cute-hover: #FF91A4;
+  --color-cute-text: #4A4A4A;
+}

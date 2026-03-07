@@ -57,15 +57,46 @@
                                 <td class="p-4 whitespace-nowrap">
                                     <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $order->package->name ?? '-' }}</p>
                                     <p class="text-xs text-pink-500 dark:text-pink-400 font-bold mt-1 mb-2">฿{{ number_format($order->total_price) }}</p>
+                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-2">
+                                        วิธีชำระ:
+                                        <span class="font-semibold {{ ($order->payment_method ?? 'transfer') === 'cash' ? 'text-amber-600 dark:text-amber-300' : 'text-blue-600 dark:text-blue-300' }}">
+                                            {{ ($order->payment_method ?? 'transfer') === 'cash' ? 'เงินสดปลายทาง' : 'โอน/สแกน QR' }}
+                                        </span>
+                                    </p>
+
+                                    @if(!empty($order->selected_addons))
+                                        <div class="mb-2 text-[11px] text-gray-500 dark:text-gray-400">
+                                            @foreach($order->selected_addons as $addon)
+                                                <p>
+                                                    {{ $addon['name'] ?? '-' }} x {{ $addon['qty'] ?? 1 }}
+                                                    @if(!empty($addon['auto_selected']))
+                                                        <span class="ml-1 inline-flex items-center rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-2 py-0.5 text-[10px] font-semibold">auto</span>
+                                                    @endif
+                                                </p>
+                                            @endforeach
+                                        </div>
+                                    @endif
                                     
                                     <div class="flex items-center gap-1">
                                         @if($order->payment_status == 'paid')
-                                            <button type="button" onclick="showSlip('{{ asset('storage/' . $order->payment_slip) }}')" class="inline-flex items-center gap-1 text-[11px] bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300 px-2 py-1 rounded border border-gray-200 dark:border-slate-600 hover:bg-gray-200 transition-colors focus:outline-none">
-                                                <i class="fa-solid fa-receipt"></i> ดูสลิป
-                                            </button>
+                                            @if(($order->payment_method ?? 'transfer') === 'transfer' && $order->payment_slip)
+                                                <button type="button" onclick="showSlip('{{ asset('storage/' . $order->payment_slip) }}')" class="inline-flex items-center gap-1 text-[11px] bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300 px-2 py-1 rounded border border-gray-200 dark:border-slate-600 hover:bg-gray-200 transition-colors focus:outline-none">
+                                                    <i class="fa-solid fa-receipt"></i> ดูสลิป
+                                                </button>
+                                            @endif
                                             <span class="text-[11px] text-green-600 dark:text-green-400 font-bold ml-1">
                                                 <i class="fa-solid fa-circle-check"></i> ชำระแล้ว
                                             </span>
+                                        @elseif($order->payment_status == 'pending_cash')
+                                            <span class="inline-flex items-center gap-1 text-[11px] bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 px-2 py-1 rounded border border-amber-200 dark:border-amber-800">
+                                                <i class="fa-solid fa-hand-holding-dollar"></i> รอรับเงินสด
+                                            </span>
+                                            <form action="{{ route('admin.orders.confirm_cash', $order->id) }}" method="POST" class="m-0">
+                                                @csrf
+                                                <button type="submit" class="inline-flex items-center justify-center text-[11px] bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 px-2 py-1 rounded border border-green-200 dark:border-green-800 hover:bg-green-200 dark:hover:bg-green-800/60 transition-colors shadow-sm focus:outline-none" title="ยืนยันรับเงินสด">
+                                                    <i class="fa-solid fa-check mr-1"></i> รับเงินแล้ว
+                                                </button>
+                                            </form>
                                         
                                         @elseif($order->payment_status == 'reviewing' && $order->payment_slip)
                                             <button type="button" onclick="showSlip('{{ asset('storage/' . $order->payment_slip) }}')" class="inline-flex items-center gap-1 text-[11px] bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 px-2 py-1 rounded border border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors shadow-sm focus:outline-none">

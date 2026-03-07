@@ -8,8 +8,119 @@
 /* ตั้งค่าธีมสีและฟอนต์ของเราตรงนี้เลย (v4 ใช้ @theme แบบนี้ครับ) */
 @theme {
   --font-sans: 'Mitr', sans-serif;
-  --color-cute-bg: #FFF0F5;
-  --color-cute-primary: #FFB6C1;
-  --color-cute-hover: #FF91A4;
-  --color-cute-text: #4A4A4A;
+  --color-cute-bg: #eaf4fc;
+  --color-cute-primary: #1980d5;
+  --color-cute-hover: #60b0f7;
+  --color-cute-text: #25374a;
+}
+
+:root {
+  --brand-blue-700: #1980d5;
+  --brand-blue-500: #60b0f7;
+  --brand-blue-100: #e5f5ff;
+  --brand-rose-200: #f5d1e0;
+  --brand-pink-400: #ff76a2;
+  --brand-text: #1a2b3c;
+  --brand-surface: rgba(255, 255, 255, 0.9);
+  --brand-border: rgba(96, 176, 247, 0.28);
+}
+
+.washly-spectrum-bg {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(25, 128, 213, 0.2), transparent 28%),
+    radial-gradient(circle at 82% 12%, rgba(255, 118, 162, 0.18), transparent 32%),
+    linear-gradient(120deg, #1980d5 0%, #60b0f7 24%, #e5f5ff 52%, #f5d1e0 76%, #ff76a2 100%);
+  background-attachment: fixed;
+}
+
+.washly-shell {
+  color: var(--brand-text);
+}
+
+.washly-card {
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-border);
+  box-shadow: 0 14px 40px -22px rgba(25, 128, 213, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+.washly-brand-text {
+  background: linear-gradient(105deg, var(--brand-blue-700), var(--brand-blue-500), var(--brand-pink-400));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.washly-brand-btn {
+  background: linear-gradient(95deg, var(--brand-blue-700), var(--brand-blue-500) 55%, var(--brand-pink-400));
+  color: #ffffff;
+}
+
+.washly-brand-btn:hover {
+  filter: brightness(0.96);
+}
+
+.washly-input {
+  border: 1px solid rgba(96, 176, 247, 0.45);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.washly-input:focus {
+  outline: none;
+  border-color: var(--brand-blue-500);
+  box-shadow: 0 0 0 3px rgba(96, 176, 247, 0.22);
+}
+
+.washly-soft-chip {
+  background: linear-gradient(120deg, rgba(25, 128, 213, 0.12), rgba(245, 209, 224, 0.18));
+  border: 1px solid rgba(96, 176, 247, 0.26);
+}
+
+.dark .washly-shell {
+  color: #e7eef8;
+}
+
+.dark .washly-card {
+  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(96, 176, 247, 0.36);
+  box-shadow: 0 16px 42px -24px rgba(96, 176, 247, 0.35);
+}
+
+/* Compatibility remap: keep existing pink utility usage but align to the new palette. */
+.text-pink-500,
+.text-pink-600 {
+  color: #1980d5;
+}
+
+.hover\:text-pink-500:hover,
+.hover\:text-pink-600:hover,
+.hover\:text-pink-400:hover {
+  color: #1470bb;
+}
+
+.bg-pink-50,
+.bg-pink-100,
+.bg-pink-50\/30 {
+  background-color: rgba(96, 176, 247, 0.14);
+}
+
+.bg-pink-500,
+.bg-pink-600 {
+  background-color: #1980d5;
+}
+
+.border-pink-50,
+.border-pink-100,
+.border-pink-200,
+.border-pink-300 {
+  border-color: rgba(96, 176, 247, 0.35);
+}
+
+.from-pink-500,
+.to-rose-400,
+.from-pink-400,
+.to-rose-300 {
+  --tw-gradient-from: #1980d5;
+  --tw-gradient-to: #ff76a2;
+  --tw-gradient-stops: var(--tw-gradient-from), #60b0f7, var(--tw-gradient-to);
 }

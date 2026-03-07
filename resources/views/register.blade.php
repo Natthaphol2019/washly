@@ -9,12 +9,12 @@
     
     @vite(['resources/css/app.css'])
 </head>
-<body class="bg-cute-bg text-cute-text min-h-screen flex items-center justify-center p-4">
+<body class="washly-spectrum-bg washly-shell min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white p-8 rounded-[30px] shadow-[0_10px_40px_-10px_rgba(255,182,193,0.6)] w-full max-w-lg border-2 border-pink-50 my-8">
+    <div class="washly-card p-8 rounded-[30px] w-full max-w-lg border my-8">
 
         <div class="text-center mb-6">
-            <h2 class="text-2xl font-medium text-cute-hover">มาเป็นครอบครัวเดียวกัน! 🌸</h2>
+            <h2 class="text-2xl font-medium washly-brand-text">มาเป็นครอบครัวเดียวกัน! 🌸</h2>
             <p class="text-sm text-gray-500 mt-2">กรอกข้อมูลนิดเดียว ก็พร้อมเรียกไรเดอร์มารับผ้าแล้ว</p>
         </div>
 
@@ -33,29 +33,29 @@
             
             <div>
                 <label class="block text-sm font-medium mb-1 pl-2">ชื่อ-นามสกุล</label>
-                <input type="text" name="fullname" value="{{ old('fullname') }}" required class="w-full px-5 py-3 rounded-full border border-pink-200 bg-pink-50/30 focus:outline-none focus:ring-2 focus:ring-cute-primary transition-all">
+                <input type="text" name="fullname" value="{{ old('fullname') }}" required class="w-full px-5 py-3 rounded-full washly-input transition-all">
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium mb-1 pl-2">ชื่อผู้ใช้งาน (Username)</label>
-                    <input type="text" name="username" value="{{ old('username') }}" required class="w-full px-5 py-3 rounded-full border border-pink-200 bg-pink-50/30 focus:outline-none focus:ring-2 focus:ring-cute-primary transition-all">
+                    <input type="text" name="username" value="{{ old('username') }}" required class="w-full px-5 py-3 rounded-full washly-input transition-all">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1 pl-2">เบอร์โทรศัพท์</label>
-                    <input type="tel" name="phone" value="{{ old('phone') }}" required class="w-full px-5 py-3 rounded-full border border-pink-200 bg-pink-50/30 focus:outline-none focus:ring-2 focus:ring-cute-primary transition-all">
+                    <input type="tel" name="phone" value="{{ old('phone') }}" required class="w-full px-5 py-3 rounded-full washly-input transition-all">
                 </div>
             </div>
 
             <div>
                 <div class="flex items-center justify-between mb-1 pl-2 pr-1">
                     <label class="block text-sm font-medium">ที่อยู่หลัก / หอพัก / เลขห้อง</label>
-                    <button type="button" onclick="getLocation()" id="gps-btn" class="text-xs bg-pink-100 text-pink-600 hover:bg-pink-200 px-3 py-1.5 rounded-full font-medium transition-colors flex items-center gap-1 shadow-sm">
+                    <button type="button" onclick="getLocation()" id="gps-btn" class="text-xs bg-sky-100 text-sky-700 hover:bg-sky-200 px-3 py-1.5 rounded-full font-medium transition-colors flex items-center gap-1 shadow-sm">
                         <i class="fa-solid fa-location-crosshairs"></i> <span id="gps-text">ปักหมุด GPS</span>
                     </button>
                 </div>
                 
-                <textarea id="address" name="address" rows="3" required placeholder="กรอกที่อยู่ หรือกดปักหมุด GPS ให้ระบบช่วยดึงที่อยู่..." class="w-full px-5 py-3 rounded-2xl border border-pink-200 bg-pink-50/30 focus:outline-none focus:ring-2 focus:ring-cute-primary transition-all resize-none">{{ old('address') }}</textarea>
+                <textarea id="address" name="address" rows="3" required placeholder="กรอกที่อยู่ หรือกดปักหมุด GPS ให้ระบบช่วยดึงที่อยู่..." class="w-full px-5 py-3 rounded-2xl washly-input transition-all resize-none">{{ old('address') }}</textarea>
                 
                 <input type="hidden" id="latitude" name="latitude" value="{{ old('latitude') }}">
                 <input type="hidden" id="longitude" name="longitude" value="{{ old('longitude') }}">
@@ -65,21 +65,21 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <div>
                     <label class="block text-sm font-medium mb-1 pl-2">รหัสผ่าน</label>
-                    <input type="password" name="password" required class="w-full px-5 py-3 rounded-full border border-pink-200 bg-pink-50/30 focus:outline-none focus:ring-2 focus:ring-cute-primary transition-all">
+                    <input type="password" name="password" required class="w-full px-5 py-3 rounded-full washly-input transition-all">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1 pl-2">ยืนยันรหัสผ่าน</label>
-                    <input type="password" name="password_confirmation" required class="w-full px-5 py-3 rounded-full border border-pink-200 bg-pink-50/30 focus:outline-none focus:ring-2 focus:ring-cute-primary transition-all">
+                    <input type="password" name="password_confirmation" required class="w-full px-5 py-3 rounded-full washly-input transition-all">
                 </div>
             </div>
 
-            <button type="submit" class="w-full bg-cute-primary hover:bg-cute-hover text-white font-medium py-3 rounded-full shadow-md hover:shadow-lg transition-all mt-4 text-lg">
+            <button type="submit" class="w-full washly-brand-btn text-white font-medium py-3 rounded-full shadow-md hover:shadow-lg transition-all mt-4 text-lg">
                 สมัครสมาชิกเลย! ✨
             </button>
         </form>
 
         <p class="text-center text-sm text-gray-500 mt-6">
-            มีบัญชีอยู่แล้ว? <a href="/login" class="text-cute-hover font-medium hover:underline">เข้าสู่ระบบ</a>
+            มีบัญชีอยู่แล้ว? <a href="/login" class="text-sky-700 font-medium hover:underline">เข้าสู่ระบบ</a>
         </p>
     </div>
 
@@ -120,7 +120,7 @@
                         }
 
                         gpsBtn.innerHTML = '<i class="fa-solid fa-check text-green-600"></i> <span id="gps-text">สำเร็จ!</span>';
-                        gpsBtn.classList.remove('opacity-75', 'cursor-not-allowed', 'bg-pink-100', 'text-pink-600');
+                        gpsBtn.classList.remove('opacity-75', 'cursor-not-allowed', 'bg-sky-100', 'text-sky-700');
                         gpsBtn.classList.add('bg-green-100', 'text-green-600');
                     }, 
                     function(error) {

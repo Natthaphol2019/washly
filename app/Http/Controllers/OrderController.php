@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Models\User;
+use App\Notifications\SystemNotification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 
 class OrderController extends Controller
 {
@@ -12,7 +15,7 @@ class OrderController extends Controller
     {
         // ดึงข้อมูลออเดอร์ของลูกค้าคนที่ล็อกอินอยู่ พร้อมดึงข้อมูลแพ็กเกจที่ผูกกันไว้มาด้วย (with)
         // จัดเรียงจากออเดอร์ล่าสุด (desc)
-        $orders = Order::with('package')
+        $orders = Order::with(['package', 'logs'])
             ->where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')
             ->get();
@@ -26,9 +29,17 @@ class OrderController extends Controller
     {
         $order = Order::findOrFail($id);
 
-        // เช็กความปลอดภัย: ต้องเป็นออเดอร์ของตัวเอง และยังไม่ได้จ่ายเงิน
-        if ($order->user_id !== Auth::id() || $order->payment_slip !== null) {
-            return redirect()->route('customer.orders')->with('error', 'ออเดอร์นี้ชำระเงินไปแล้ว หรือไม่ใช่ออเดอร์ของคุณ');
+        // เช็กความปลอดภัย: ต้องเป็นออเดอร์ของตัวเอง, ต้องเป็นโหมดโอน และต้องยังไม่ส่งหลักฐาน
+        if ($order->user_id !== Auth::id()) {
+            return redirect()->route('customer.orders')->with('error', 'ไม่สามารถเข้าถึงออเดอร์นี้ได้');
+        }
+
+        if ($order->payment_method !== 'transfer') {
+            return redirect()->route('customer.orders')->with('error', 'ออเดอร์นี้เลือกชำระเงินสด ไม่ต้องแนบสลิป');
+        }
+
+        if ($order->payment_status !== 'unpaid' || $order->payment_slip !== null) {
+            return redirect()->route('customer.orders')->with('error', 'ออเดอร์นี้ชำระเงินไปแล้ว หรือมีสลิปอยู่ในระบบแล้ว');
         }
 
         return view('customer.pay', compact('order'));
@@ -43,6 +54,18 @@ class OrderController extends Controller
 
         $order = Order::findOrFail($id);
 
+        if ($order->user_id !== Auth::id()) {
+            return redirect()->route('customer.orders')->with('error', 'ไม่สามารถอัปโหลดให้กับออเดอร์นี้ได้');
+        }
+
+        if ($order->payment_method !== 'transfer') {
+            return redirect()->route('customer.orders')->with('error', 'ออเดอร์นี้เป็นเงินสดปลายทาง ไม่ต้องแนบสลิป');
+        }
+
+        if ($order->payment_status !== 'unpaid') {
+            return redirect()->route('customer.orders')->with('error', 'ออเดอร์นี้ไม่ได้อยู่ในสถานะรอชำระ');
+        }
+
         if ($request->hasFile('slip')) {
             $path = $request->file('slip')->store('slips', 'public');
             $order->payment_slip = $path;
@@ -51,6 +74,22 @@ class OrderController extends Controller
             $order->payment_status = 'reviewing'; 
             
             $order->save();
+
+            $customer = Auth::user();
+            $customer->notify(new SystemNotification(
+                'ส่งสลิปแล้ว',
+                'ระบบรับสลิปของออเดอร์ ' . $order->order_number . ' แล้ว กำลังรอแอดมินตรวจสอบ',
+                route('customer.orders'),
+                'info'
+            ));
+
+            $admins = User::whereIn('role', ['admin', 'staff'])->get();
+            Notification::send($admins, new SystemNotification(
+                'มีสลิปใหม่รอตรวจสอบ',
+                'ออเดอร์ ' . $order->order_number . ' อัปโหลดสลิปเข้ามาแล้ว',
+                route('admin.orders.index'),
+                'warning'
+            ));
         }
 
         return redirect()->route('customer.orders')->with('success_payment', 'อัปโหลดสลิปสำเร็จ! รอแอดมินตรวจสอบยอดเงินสักครู่นะครับ 💸');

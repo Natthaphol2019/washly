@@ -15,11 +15,23 @@ class Order extends Model
         'pickup_latitude',  // เพิ่มฟิลด์แผนที่จุดรับผ้า
         'pickup_longitude', // เพิ่มฟิลด์แผนที่จุดรับผ้า
         'pickup_map_link',  // เพิ่มฟิลด์ลิงก์จุดรับผ้า
+        'use_customer_detergent',
+        'use_customer_softener',
         'wash_temp',
         'dry_temp',
         'status',
         'payment_status',
+        'payment_method',
+        'subtotal',
+        'addon_total',
+        'selected_addons',
         'total_price',
+    ];
+
+    protected $casts = [
+        'selected_addons' => 'array',
+        'use_customer_detergent' => 'boolean',
+        'use_customer_softener' => 'boolean',
     ];
 
     // ผูกความสัมพันธ์กับตารางอื่นๆ

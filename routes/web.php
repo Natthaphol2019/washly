@@ -22,7 +22,6 @@ Route::get('/', function () {
     }
     return redirect()->route('login');
 });
-
 // ==========================================
 // 🚪 โซนผู้เยี่ยมชม (Guest - ยังไม่ได้ล็อกอิน)
 // ==========================================
@@ -36,6 +35,10 @@ Route::middleware('guest')->group(function () {
     // 🛠️ ทางเข้าแอดมิน (ความลับ)
     Route::get('/admin/login', [AuthController::class, 'showAdminLogin'])->name('admin.login');
     Route::post('/admin/login', [AuthController::class, 'adminLogin']);
+
+    // 🟢 ระบบ LINE Login (ย้ายมาไว้ตรงนี้ครับ!)
+    Route::get('/auth/line', [AuthController::class, 'redirectToLine'])->name('line.login');
+    Route::get('/auth/line/callback', [AuthController::class, 'handleLineCallback']);
 });
 
 // ==========================================

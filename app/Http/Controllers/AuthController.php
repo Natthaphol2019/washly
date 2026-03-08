@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-
+use Laravel\Socialite\Facades\Socialite;
 class AuthController extends Controller
 {
     public function showLogin(Request $request)
@@ -80,5 +80,43 @@ class AuthController extends Controller
 
         // 4. พากลับไปหน้าหลัก (หรือหน้า Dashboard ที่เตรียมไว้)
         return redirect('/')->with('success', 'สมัครสมาชิกสำเร็จ! ยินดีต้อนรับครับ');
+    }
+    // 1. ฟังก์ชันพาลูกค้าไปหน้ายืนยันตัวตนของ LINE
+    public function redirectToLine()
+    {
+        return Socialite::driver('line')->redirect();
+    }
+
+    // 2. ฟังก์ชันรับข้อมูลกลับมาจาก LINE
+    public function handleLineCallback()
+    {
+        try {
+            // รับข้อมูลส่วนตัวลูกค้าจาก LINE
+            $lineUser = Socialite::driver('line')->user();
+
+            // เช็คว่าเคยมี LINE ID นี้ในระบบ Washly หรือยัง?
+            $existingUser = User::where('line_id', $lineUser->getId())->first();
+
+            if ($existingUser) {
+                // กรณีที่ 1: ลูกค้าเก่า (ล็อกอินให้เลย แล้วพาไปหน้าหลัก)
+                Auth::login($existingUser);
+                return redirect('/')->with('success', 'ยินดีต้อนรับกลับมาครับ!');
+            } else {
+                // กรณีที่ 2: ลูกค้าใหม่ (ยังไม่มีในระบบ)
+                // เราจะเก็บข้อมูลจาก LINE ไว้ใน Session ชั่วคราว ก่อนพาไปหน้ากรอกเบอร์/ที่อยู่
+                session([
+                    'line_id' => $lineUser->getId(),
+                    'line_name' => $lineUser->getName(),
+                    'line_avatar' => $lineUser->getAvatar(),
+                ]);
+
+                // พาไปหน้าฟอร์มสมัครสมาชิก (หน้าที่น้องซีทำไว้) เพื่อกรอกข้อมูลที่เหลือ
+                return redirect('/register')->with('info', 'ผูกบัญชี LINE สำเร็จ! กรุณากรอกที่อยู่และเบอร์โทรเพื่อเริ่มใช้งานครับ');
+            }
+
+        } catch (\Exception $e) {
+            // ถ้าลูกค้ากดยกเลิก หรือระบบพัง ให้พากลับไปหน้าล็อกอิน
+            return redirect('/login')->withErrors(['error' => 'การเข้าสู่ระบบด้วย LINE ขัดข้อง กรุณาลองใหม่ครับ']);
+        }
     }
 }

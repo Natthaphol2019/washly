@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
-
+use SocialiteProviders\Manager\SocialiteWasCalled;
+use SocialiteProviders\Line\Provider as LineProvider;
+use Illuminate\Support\Facades\Event;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -23,5 +25,8 @@ class AppServiceProvider extends ServiceProvider
         if (request()->header('x-forwarded-proto') === 'https' || request()->isSecure()) {
             URL::forceScheme('https');
         }
+        Event::listen(function (SocialiteWasCalled $event) {
+            $event->extendSocialite('line', LineProvider::class);
+        });
     }
 }

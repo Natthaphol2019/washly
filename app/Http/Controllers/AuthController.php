@@ -41,56 +41,44 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        $request->validate([
-            'fullname' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
-            'phone' => ['required', 'string', 'max:20'],
-            'address' => ['required', 'string'],
+        // 1. ตรวจสอบข้อมูล (Validation) ตามชื่อฟิลด์ในฟอร์ม HTML
+        $validated = $request->validate([
+            'fullname' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username', // ห้ามซ้ำกับคนอื่น
+            'phone' => 'required|string|max:20',
+            'address' => 'required|string',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string',
+            'map_link' => 'nullable|string',
+            'password' => 'required|string|min:8|confirmed', // ต้องมี password_confirmation ส่งมาด้วย
+        ], [
+            // ข้อความแจ้งเตือนภาษาไทย (จะไปแสดงในกล่องแดงๆ หน้าเว็บ)
+            'fullname.required' => 'กรุณากรอกชื่อ-นามสกุล',
+            'username.required' => 'กรุณากรอกชื่อผู้ใช้งาน',
+            'username.unique' => 'ชื่อผู้ใช้งานนี้มีคนใช้ไปแล้วครับ',
+            'phone.required' => 'กรุณากรอกเบอร์โทรศัพท์',
+            'address.required' => 'กรุณากรอกที่อยู่หรือปักหมุด GPS',
+            'password.required' => 'กรุณากรอกรหัสผ่าน',
+            'password.min' => 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร',
+            'password.confirmed' => 'รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน',
         ]);
 
+        // 2. บันทึกข้อมูลลงฐานข้อมูล
         $user = User::create([
-            'fullname' => $request->fullname,
-            'username' => $request->username,
-            'password' => Hash::make($request->password),
-            'phone' => $request->phone,
-            'address' => $request->address,
-            'role' => 'customer',
+            'fullname' => $validated['fullname'],
+            'username' => $validated['username'],
+            'phone' => $validated['phone'],
+            'address' => $validated['address'],
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
+            'map_link' => $validated['map_link'] ?? null,
+            'password' => Hash::make($validated['password']), // เข้ารหัสผ่านเสมอ
         ]);
 
+        // 3. ล็อกอินให้ผู้ใช้ทันทีหลังสมัครเสร็จ
         Auth::login($user);
-        return redirect()->route('customer.main');
-    }
-    // ==========================================
-    public function showAdminLogin()
-    {
-        return view('admin.login'); // หน้าเรียบๆ สีเทา
-    }
-    public function adminLogin(Request $request)
-    {
-        $credentials = $request->validate(['username' => ['required'], 'password' => ['required']]);
 
-        if (Auth::attempt($credentials)) {
-            // เช็กว่าเป็นแอดมินจริงไหม
-            if (Auth::user()->role === 'admin') {
-                $request->session()->regenerate();
-                return redirect()->route('admin.dashboard');
-            } else {
-                // ถ้าลูกค้าแอบมาเข้าประตูแอดมิน เตะออก!
-                Auth::logout();
-                return back()->withErrors(['username' => 'คุณไม่มีสิทธิ์เข้าใช้งานระบบหลังบ้านครับ! 🚫'])->onlyInput('username');
-            }
-        }
-        return back()->withErrors(['username' => 'ชื่อผู้ใช้งาน หรือ รหัสผ่านแอดมิน ไม่ถูกต้อง'])->onlyInput('username');
-    }
-    public function logout(Request $request)
-    {
-        $role = Auth::user()->role; // จำไว้ก่อนว่าใครกดออก
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        // ตอนออก ถ้าเป็นแอดมินให้เด้งไปหน้าล็อกอินแอดมิน ถ้าเป็นลูกค้าไปหน้าลูกค้า
-        return $role === 'admin' ? redirect('/admin/login') : redirect('/login');
+        // 4. พากลับไปหน้าหลัก (หรือหน้า Dashboard ที่เตรียมไว้)
+        return redirect('/')->with('success', 'สมัครสมาชิกสำเร็จ! ยินดีต้อนรับครับ');
     }
 }

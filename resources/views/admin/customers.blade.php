@@ -59,6 +59,10 @@
                                 <td class="p-4 text-sm text-gray-500 dark:text-gray-400">{{ $customer->created_at ? $customer->created_at->format('d/m/Y H:i') : '-' }}</td>
                                 <td class="p-4 text-center whitespace-nowrap w-px">
                                     <div class="flex items-center gap-2 justify-center">
+                                        <button type="button" onclick="openViewModal('{{ addslashes($customer->fullname) }}', '{{ addslashes($customer->username) }}', '{{ addslashes($customer->phone ?? '-') }}', '{{ addslashes(preg_replace('/\r|\n/', ' ', $customer->address ?? '-')) }}', '{{ $customer->created_at ? $customer->created_at->format('d/m/Y H:i') : '-' }}')" class="bg-sky-100 text-sky-700 hover:bg-sky-200 dark:bg-sky-900/40 dark:text-sky-400 px-3 py-1.5 rounded-lg transition-colors shadow-sm text-sm flex items-center gap-1">
+                                            <i class="fa-solid fa-eye"></i> ดูข้อมูล
+                                        </button>
+
                                         <button type="button" onclick="openEditModal({{ $customer->id }}, '{{ addslashes($customer->fullname) }}', '{{ addslashes($customer->username) }}', '{{ addslashes($customer->phone ?? '') }}', '{{ addslashes(preg_replace('/\r|\n/', ' ', $customer->address ?? '')) }}')" class="bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-400 px-3 py-1.5 rounded-lg transition-colors shadow-sm text-sm flex items-center gap-1">
                                             <i class="fa-solid fa-pen-to-square"></i> แก้ไข
                                         </button>
@@ -128,6 +132,47 @@
         </div>
     </div>
 
+    <div id="viewCustomerModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeModal('viewCustomerModal')"></div>
+        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg mx-4 z-10 transform transition-all p-6 md:p-8 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-circle-info text-sky-500"></i> ข้อมูลลูกค้า
+            </h2>
+
+            <div class="space-y-4">
+                <div class="rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+                    <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">ชื่อ-นามสกุล</p>
+                    <p id="view_fullname" class="mt-1 text-base font-semibold text-gray-800 dark:text-gray-100">-</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+                        <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Username</p>
+                        <p id="view_username" class="mt-1 text-sm font-medium text-gray-800 dark:text-gray-100">-</p>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+                        <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">เบอร์โทรศัพท์</p>
+                        <p id="view_phone" class="mt-1 text-sm font-medium text-gray-800 dark:text-gray-100">-</p>
+                    </div>
+                </div>
+
+                <div class="rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+                    <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">ที่อยู่</p>
+                    <p id="view_address" class="mt-1 text-sm leading-relaxed text-gray-700 dark:text-gray-200">-</p>
+                </div>
+
+                <div class="rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+                    <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">วันที่สมัคร</p>
+                    <p id="view_created_at" class="mt-1 text-sm font-medium text-gray-800 dark:text-gray-100">-</p>
+                </div>
+            </div>
+
+            <div class="mt-8 flex justify-end">
+                <button type="button" onclick="closeModal('viewCustomerModal')" class="px-5 py-2.5 rounded-xl font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">ปิด</button>
+            </div>
+        </div>
+    </div>
+
     <div id="editCustomerModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
         <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeModal('editCustomerModal')"></div>
         <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg mx-4 z-10 transform transition-all p-6 md:p-8 max-h-[90vh] overflow-y-auto">
@@ -172,6 +217,15 @@
     <script>
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function openViewModal(fullname, username, phone, address, createdAt) {
+            document.getElementById('view_fullname').textContent = fullname || '-';
+            document.getElementById('view_username').textContent = username || '-';
+            document.getElementById('view_phone').textContent = phone || '-';
+            document.getElementById('view_address').textContent = address || '-';
+            document.getElementById('view_created_at').textContent = createdAt || '-';
+            openModal('viewCustomerModal');
+        }
 
         // อัปเดตฟังก์ชันให้รับ phone และ address เพิ่มเข้ามา
         function openEditModal(id, fullname, username, phone, address) {

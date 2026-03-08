@@ -476,16 +476,16 @@ class AdminController extends Controller
     public function storeCustomer(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'fullname' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username',
             'password' => 'required|string|min:8',
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
         ]);
 
         User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'fullname' => $request->fullname,
+            'username' => $request->username,
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
             'address' => $request->address,
@@ -497,16 +497,16 @@ class AdminController extends Controller
 
     public function updateCustomer(Request $request, $id)
     {
-        $customer = User::findOrFail($id);
+        $customer = User::where('role', 'customer')->findOrFail($id);
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $customer->id,
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string',
+            'fullname' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username,' . $customer->id,
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
         ]);
 
-        $customer->name = $request->name;
-        $customer->email = $request->email;
+        $customer->fullname = $request->fullname;
+        $customer->username = $request->username;
         $customer->phone = $request->phone;
         $customer->address = $request->address;
         
@@ -521,7 +521,7 @@ class AdminController extends Controller
 
     public function destroyCustomer($id)
     {
-        User::findOrFail($id)->delete();
+        User::where('role', 'customer')->findOrFail($id)->delete();
         return redirect()->route('admin.customers.index')->with('success', 'ลบข้อมูลลูกค้าออกจากระบบแล้ว 🗑️');
     }
 

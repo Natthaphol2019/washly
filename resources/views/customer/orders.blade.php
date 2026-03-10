@@ -13,20 +13,21 @@
             <p class="text-gray-500 dark:text-gray-400 text-lg">ติดตามสถานะการซักผ้าของคุณได้ที่นี่ <i class="fa-solid fa-sparkles text-yellow-400 ml-1"></i></p>
         </div>
 
-        @if ($orders->isEmpty())
-            <div class="bg-white dark:bg-slate-800 rounded-3xl p-10 text-center shadow-sm border border-gray-100 dark:border-slate-700 transition-colors mt-6">
-                <div class="animate-bounce" style="animation-duration: 3s;">
-                    <i class="fa-solid fa-basket-shopping text-7xl text-gray-200 dark:text-gray-700 mb-6 drop-shadow-sm"></i>
+        <div id="orders-live-region">
+            @if ($orders->isEmpty())
+                <div class="bg-white dark:bg-slate-800 rounded-3xl p-10 text-center shadow-sm border border-gray-100 dark:border-slate-700 transition-colors mt-6">
+                    <div class="animate-bounce" style="animation-duration: 3s;">
+                        <i class="fa-solid fa-basket-shopping text-7xl text-gray-200 dark:text-gray-700 mb-6 drop-shadow-sm"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-2">ยังไม่มีประวัติการสั่งซักผ้า</h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-8">ตะกร้าผ้าล้นแล้วหรือยัง? ให้เราจัดการให้สิ!</p>
+                    <a href="{{ route('customer.book') }}" class="inline-flex items-center justify-center bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold py-3.5 px-8 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                        <i class="fa-solid fa-plus mr-2 text-xl"></i> จองคิวเลย
+                    </a>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-2">ยังไม่มีประวัติการสั่งซักผ้า</h3>
-                <p class="text-gray-500 dark:text-gray-400 mb-8">ตะกร้าผ้าล้นแล้วหรือยัง? ให้เราจัดการให้สิ!</p>
-                <a href="{{ route('customer.book') }}" class="inline-flex items-center justify-center bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold py-3.5 px-8 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <i class="fa-solid fa-plus mr-2 text-xl"></i> จองคิวเลย
-                </a>
-            </div>
-        @else
-            <div class="space-y-6">
-                @foreach ($orders as $order)
+            @else
+                <div class="space-y-6">
+                    @foreach ($orders as $order)
                     <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-md border border-gray-100 dark:border-slate-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
 
                         <div class="absolute top-0 left-0 w-2.5 h-full transition-colors duration-300
@@ -210,8 +211,78 @@
 
                         </div>
                     </div>
-                @endforeach
-            </div>
-        @endif
+                    @endforeach
+                </div>
+            @endif
+        </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    (function () {
+        let refreshTimer = null;
+        let isRefreshing = false;
+
+        async function refreshOrdersSection() {
+            if (isRefreshing) {
+                return;
+            }
+
+            isRefreshing = true;
+
+            try {
+                const response = await fetch(window.location.href, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html',
+                    },
+                });
+
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const nextRegion = doc.querySelector('#orders-live-region');
+                const currentRegion = document.querySelector('#orders-live-region');
+
+                if (nextRegion && currentRegion) {
+                    currentRegion.innerHTML = nextRegion.innerHTML;
+                } else {
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Refresh orders section failed', error);
+                window.location.reload();
+            } finally {
+                isRefreshing = false;
+            }
+        }
+
+        function scheduleRefresh() {
+            if (refreshTimer !== null) {
+                return;
+            }
+
+            refreshTimer = window.setTimeout(function () {
+                refreshTimer = null;
+                refreshOrdersSection();
+            }, 500);
+        }
+
+        window.addEventListener('washly:notification-received', function (event) {
+            const payload = event.detail || {};
+            const haystack = `${payload.title || ''} ${payload.message || ''} ${payload.url || ''}`.toLowerCase();
+
+            const isOrderRelated =
+                haystack.includes('ออเดอร์') ||
+                haystack.includes('สถานะ') ||
+                haystack.includes('ชำระ') ||
+                haystack.includes('/customer/orders');
+
+            if (isOrderRelated) {
+                scheduleRefresh();
+            }
+        });
+    })();
+</script>
+@endpush

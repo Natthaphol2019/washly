@@ -16,7 +16,7 @@ use App\Models\Package;
 Route::get('/', function () {
     if (Auth::check()) {
         // ใช้ admin.dashboard เป็นมาตรฐานหลัก
-        return Auth::user()->role === 'admin'
+        return in_array(Auth::user()->role, ['admin', 'staff'], true)
             ? redirect()->route('admin.dashboard')
             : redirect()->route('customer.main');
     }
@@ -56,7 +56,7 @@ Route::middleware('auth')->group(function () {
     // ------------------------------------------
     // 👑 โซนแอดมิน (Admin)
     // ------------------------------------------
-    Route::prefix('admin')->group(function () {
+    Route::prefix('admin')->middleware('role.admin_or_staff')->group(function () {
 
         // 📊 ภาพรวมระบบ (Dashboard)
         Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
@@ -96,7 +96,7 @@ Route::middleware('auth')->group(function () {
     });
 
 
-    Route::prefix('customer')->group(function () {
+    Route::prefix('customer')->middleware('role.customer')->group(function () {
 
         // รองรับลิงก์เก่า customer.dashboard
         Route::get('/dashboard', function () {
@@ -116,6 +116,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/orders', [OrderController::class, 'index'])->name('customer.orders');
         Route::get('/orders/{id}/pay', [OrderController::class, 'paymentForm'])->name('customer.orders.pay');
         Route::post('/orders/{id}/pay', [OrderController::class, 'uploadSlip'])->name('customer.orders.upload_slip');
+        Route::post('/orders/{id}/payment-method/cash', [OrderController::class, 'switchToCash'])->name('customer.orders.switch_to_cash');
 
         // 📦 ดูแพ็กเกจ
         Route::get('/packages', function () {

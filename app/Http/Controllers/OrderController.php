@@ -94,4 +94,43 @@ class OrderController extends Controller
 
         return redirect()->route('customer.orders')->with('success_payment', 'อัปโหลดสลิปสำเร็จ! รอแอดมินตรวจสอบยอดเงินสักครู่นะครับ 💸');
     }
+
+    public function switchToCash($id)
+    {
+        $order = Order::findOrFail($id);
+
+        if ($order->user_id !== Auth::id()) {
+            return redirect()->route('customer.orders')->with('error', 'ไม่สามารถแก้ไขวิธีชำระเงินของออเดอร์นี้ได้');
+        }
+
+        if ($order->payment_method !== 'transfer') {
+            return redirect()->route('customer.orders')->with('info', 'ออเดอร์นี้ถูกตั้งเป็นเงินสดปลายทางไว้แล้ว');
+        }
+
+        if ($order->payment_status !== 'unpaid' || $order->payment_slip !== null) {
+            return redirect()->route('customer.orders')->with('error', 'เปลี่ยนเป็นเงินสดปลายทางไม่ได้ เพราะออเดอร์นี้มีการชำระเงินหรือส่งสลิปไปแล้ว');
+        }
+
+        $order->payment_method = 'cash';
+        $order->payment_status = 'pending_cash';
+        $order->save();
+
+        $customer = Auth::user();
+        $customer->notify(new SystemNotification(
+            'เปลี่ยนวิธีชำระเงินแล้ว',
+            'ออเดอร์ ' . $order->order_number . ' ถูกเปลี่ยนเป็นชำระเงินสดปลายทางเรียบร้อยแล้ว',
+            route('customer.orders'),
+            'info'
+        ));
+
+        $admins = User::whereIn('role', ['admin', 'staff'])->get();
+        Notification::send($admins, new SystemNotification(
+            'ลูกค้าเปลี่ยนเป็นเงินสดปลายทาง',
+            'ออเดอร์ ' . $order->order_number . ' เปลี่ยนวิธีชำระเงินเป็นเงินสดปลายทางแล้ว',
+            route('admin.orders.index'),
+            'warning'
+        ));
+
+        return redirect()->route('customer.orders')->with('success', 'เปลี่ยนเป็นชำระเงินปลายทางเรียบร้อยแล้ว');
+    }
 }

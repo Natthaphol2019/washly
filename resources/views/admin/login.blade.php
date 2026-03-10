@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - ระบบจัดการหลังบ้าน</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @vite(['resources/css/app.css'])
 </head>
 <body class="washly-spectrum-bg washly-shell flex items-center justify-center min-h-screen font-sans p-4">
@@ -46,5 +47,32 @@
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const alertBase = {
+                confirmButtonColor: '#1980d5',
+                confirmButtonText: 'รับทราบ',
+                customClass: { popup: 'rounded-3xl' }
+            };
+
+            @if(session('success'))
+                Swal.fire({
+                    ...alertBase,
+                    title: 'สำเร็จ',
+                    text: @json(session('success')),
+                    icon: 'success'
+                });
+            @endif
+
+            @if($errors->any())
+                Swal.fire({
+                    ...alertBase,
+                    title: 'เข้าสู่ระบบไม่สำเร็จ',
+                    text: @json($errors->first()),
+                    icon: 'error'
+                });
+            @endif
+        });
+    </script>
 </body>
 </html>

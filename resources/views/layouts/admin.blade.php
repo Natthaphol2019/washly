@@ -9,7 +9,7 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    @vite(['resources/css/app.css'])
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <script>
         if (localStorage.theme === 'dark' || !('theme' in localStorage)) {
@@ -212,6 +212,19 @@
             })
         }
 
+        function showWashlyAlert(options) {
+            Swal.fire({
+                confirmButtonColor: '#1980d5',
+                confirmButtonText: 'รับทราบ',
+                background: htmlEl.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                color: htmlEl.classList.contains('dark') ? '#f8fafc' : '#1e293b',
+                customClass: {
+                    popup: 'rounded-3xl'
+                },
+                ...options,
+            });
+        }
+
         // ==========================================
         // 🔔 4. ระบบแจ้งเตือน (Database Notifications)
         // ==========================================
@@ -220,8 +233,165 @@
         const notifList = document.getElementById('notif-list');
         const notifBadge = document.getElementById('notif-badge');
         const notifReadAllBtn = document.getElementById('notif-read-all');
+        const realtimeStatusEl = null;
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const currentUserId = @json((string) auth()->id());
         let previousUnreadCount = null;
+        let realtimeStateBound = false;
+        let lastRealtimePopupAt = 0;
+
+        function setRealtimeStatus(state) {
+            if (!realtimeStatusEl) {
+                return;
+            }
+
+            const classes = [
+                'bg-emerald-100', 'text-emerald-700', 'dark:bg-emerald-900/40', 'dark:text-emerald-300',
+                'bg-amber-100', 'text-amber-700', 'dark:bg-amber-900/40', 'dark:text-amber-300',
+                'bg-red-100', 'text-red-700', 'dark:bg-red-900/40', 'dark:text-red-300',
+                'bg-slate-200', 'text-slate-700', 'dark:bg-slate-700', 'dark:text-slate-200'
+            ];
+            realtimeStatusEl.classList.remove(...classes);
+
+            if (state === 'connected') {
+                realtimeStatusEl.classList.add('bg-emerald-100', 'text-emerald-700', 'dark:bg-emerald-900/40', 'dark:text-emerald-300');
+                realtimeStatusEl.innerHTML = '<span class="inline-block w-1.5 h-1.5 rounded-full bg-current"></span> Realtime: Connected';
+                return;
+            }
+
+            if (state === 'connecting' || state === 'initialized') {
+                realtimeStatusEl.classList.add('bg-amber-100', 'text-amber-700', 'dark:bg-amber-900/40', 'dark:text-amber-300');
+                realtimeStatusEl.innerHTML = '<span class="inline-block w-1.5 h-1.5 rounded-full bg-current"></span> Realtime: Connecting';
+                return;
+            }
+
+            if (state === 'unavailable' || state === 'disconnected' || state === 'failed') {
+                realtimeStatusEl.classList.add('bg-red-100', 'text-red-700', 'dark:bg-red-900/40', 'dark:text-red-300');
+                realtimeStatusEl.innerHTML = '<span class="inline-block w-1.5 h-1.5 rounded-full bg-current"></span> Realtime: Disconnected';
+                return;
+            }
+
+            realtimeStatusEl.classList.add('bg-slate-200', 'text-slate-700', 'dark:bg-slate-700', 'dark:text-slate-200');
+            realtimeStatusEl.innerHTML = '<span class="inline-block w-1.5 h-1.5 rounded-full bg-current"></span> Realtime: Unknown';
+        }
+
+        function bindRealtimeConnectionState() {
+            if (realtimeStateBound) {
+                return;
+            }
+
+            const connection = window.Echo?.connector?.pusher?.connection;
+            if (!connection) {
+                setRealtimeStatus('connecting');
+                setTimeout(bindRealtimeConnectionState, 1200);
+                return;
+            }
+
+            realtimeStateBound = true;
+            setRealtimeStatus(connection.state || 'connecting');
+
+            connection.bind('state_change', (states) => {
+                setRealtimeStatus(states?.current || 'unknown');
+            });
+        }
+
+
+        function showRealtimeToast(notification) {
+            const popupIcon = notification.level === 'success' ? 'success' : (notification.level === 'warning' ? 'warning' : 'info');
+            lastRealtimePopupAt = Date.now();
+
+            Swal.fire({
+                icon: popupIcon,
+                title: notification.title || 'มีการแจ้งเตือนใหม่',
+                text: notification.message || '',
+                showConfirmButton: false,
+                timer: 3600,
+                timerProgressBar: true,
+                width: window.innerWidth < 640 ? '90%' : 420,
+                background: htmlEl.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                color: htmlEl.classList.contains('dark') ? '#f8fafc' : '#1e293b',
+                customClass: { popup: 'rounded-3xl' }
+            });
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function getUnreadCountFromBadge() {
+            if (!notifBadge || notifBadge.classList.contains('hidden')) {
+                return 0;
+            }
+
+            const parsed = parseInt(notifBadge.textContent, 10);
+            return Number.isFinite(parsed) ? parsed : 0;
+        }
+
+        function setUnreadBadge(unreadCount) {
+            if (!notifBadge) {
+                return;
+            }
+
+            if (unreadCount > 0) {
+                notifBadge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+                notifBadge.classList.remove('hidden');
+            } else {
+                notifBadge.classList.add('hidden');
+            }
+        }
+
+        function prependRealtimeNotification(notification) {
+            if (!notifList) {
+                return;
+            }
+
+            const title = escapeHtml(notification.title || 'มีการแจ้งเตือนใหม่');
+            const message = escapeHtml(notification.message || 'มีการอัปเดตใหม่ในระบบ');
+            const url = escapeHtml(notification.url || '#');
+            const level = notification.level || 'info';
+
+            const badgeClassByLevel = {
+                success: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+                warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+                info: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
+            };
+
+            const iconByLevel = {
+                success: 'fa-solid fa-circle-check',
+                warning: 'fa-solid fa-triangle-exclamation',
+                info: 'fa-solid fa-circle-info',
+            };
+
+            const badgeClass = badgeClassByLevel[level] || badgeClassByLevel.info;
+            const icon = iconByLevel[level] || iconByLevel.info;
+
+            const html = `
+                <a href="${url}" class="notif-item block px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors bg-sky-50 dark:bg-sky-900/10">
+                    <div class="flex items-start gap-3">
+                        <span class="mt-0.5 inline-flex items-center justify-center w-7 h-7 rounded-full ${badgeClass}">
+                            <i class="${icon} text-[11px]"></i>
+                        </span>
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold text-gray-700 dark:text-gray-100">${title}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${message}</p>
+                            <p class="text-[11px] text-gray-400 mt-1">เมื่อสักครู่</p>
+                        </div>
+                    </div>
+                </a>
+            `;
+
+            if (notifList.innerHTML.includes('ยังไม่มีการแจ้งเตือน')) {
+                notifList.innerHTML = html;
+                return;
+            }
+
+            notifList.insertAdjacentHTML('afterbegin', html);
+        }
 
         function renderNotificationItem(item) {
             const link = item.url || '#';
@@ -255,27 +425,25 @@
                 const data = await response.json();
                 const unreadCount = Number(data.unread_count || 0);
 
-                if (unreadCount > 0) {
-                    notifBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-                    notifBadge.classList.remove('hidden');
-                } else {
-                    notifBadge.classList.add('hidden');
+                if (previousUnreadCount !== null && unreadCount > previousUnreadCount) {
+                    const justShownByRealtime = Date.now() - lastRealtimePopupAt < 5000;
+                    if (!justShownByRealtime) {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'มีการแจ้งเตือนใหม่',
+                            text: `คุณมีข้อความใหม่ ${unreadCount - previousUnreadCount} รายการ`,
+                            showConfirmButton: false,
+                            timer: 2800,
+                            timerProgressBar: true,
+                            width: window.innerWidth < 640 ? '90%' : 420,
+                            background: htmlEl.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                            color: htmlEl.classList.contains('dark') ? '#f8fafc' : '#1e293b',
+                            customClass: { popup: 'rounded-3xl' }
+                        });
+                    }
                 }
 
-                if (previousUnreadCount !== null && unreadCount > previousUnreadCount) {
-                    const newCount = unreadCount - previousUnreadCount;
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'info',
-                        title: `มีข้อความใหม่ ${newCount} รายการ`,
-                        showConfirmButton: false,
-                        timer: 2500,
-                        timerProgressBar: true,
-                        background: htmlEl.classList.contains('dark') ? '#1e293b' : '#ffffff',
-                        color: htmlEl.classList.contains('dark') ? '#f8fafc' : '#1e293b',
-                    });
-                }
+                setUnreadBadge(unreadCount);
 
                 previousUnreadCount = unreadCount;
 
@@ -337,8 +505,59 @@
             }
         });
 
+        function bindRealtimeNotifications() {
+            if (!window.Echo || !currentUserId) {
+                setRealtimeStatus('disconnected');
+                return;
+            }
+
+            bindRealtimeConnectionState();
+
+            window.Echo.private(`App.Models.User.${currentUserId}`)
+                .notification(async (notification) => {
+                    const payload = notification || {};
+                    showRealtimeToast(payload);
+                    prependRealtimeNotification(payload);
+
+                    const nextUnreadCount = getUnreadCountFromBadge() + 1;
+                    setUnreadBadge(nextUnreadCount);
+                    previousUnreadCount = nextUnreadCount;
+
+                    setTimeout(fetchNotifications, 1200);
+                });
+        }
+
         fetchNotifications();
+        bindRealtimeNotifications();
         setInterval(fetchNotifications, 20000);
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if (session('success'))
+                showWashlyAlert({
+                    title: 'สำเร็จ',
+                    text: @json(session('success')),
+                    icon: 'success'
+                });
+            @endif
+
+            @if (session('info'))
+                showWashlyAlert({
+                    title: 'แจ้งให้ทราบ',
+                    text: @json(session('info')),
+                    icon: 'info'
+                });
+            @endif
+
+            @if (session('error'))
+                showWashlyAlert({
+                    title: 'เกิดข้อผิดพลาด',
+                    text: @json(session('error')),
+                    icon: 'error'
+                });
+            @endif
+        });
     </script>
 </body>
 

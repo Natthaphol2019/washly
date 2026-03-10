@@ -23,7 +23,7 @@ class AuthController extends Controller
             // ล็อกอินผ่านแล้ว เช็กสิทธิ์ว่าเป็นลูกค้าจริงไหม
             if (Auth::user()->role === 'customer') {
                 $request->session()->regenerate();
-                return redirect()->route('customer.main');
+                return redirect()->route('customer.main')->with('success', 'เข้าสู่ระบบสำเร็จ ยินดีต้อนรับกลับมาครับ');
             } else {
                 // ถ้าเป็นแอดมินแอบมาเข้าประตูนี้ เตะออก!
                 Auth::logout();
@@ -81,6 +81,52 @@ class AuthController extends Controller
         // 4. พากลับไปหน้าหลัก (หรือหน้า Dashboard ที่เตรียมไว้)
         return redirect('/')->with('success', 'สมัครสมาชิกสำเร็จ! ยินดีต้อนรับครับ');
     }
+
+    public function showAdminLogin(Request $request)
+    {
+        $request->session()->regenerateToken();
+
+        return view('admin.login');
+    }
+
+    public function adminLogin(Request $request)
+    {
+        $credentials = $request->validate([
+            'username' => ['required'],
+            'password' => ['required'],
+        ]);
+
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+
+            if (in_array($user->role, ['admin', 'staff'], true)) {
+                $request->session()->regenerate();
+
+                return redirect()->route('admin.dashboard')->with('success', 'เข้าสู่ระบบหลังบ้านสำเร็จ');
+            }
+
+            Auth::logout();
+
+            return back()->withErrors([
+                'username' => 'บัญชีนี้เป็นของลูกค้า กรุณาเข้าสู่ระบบที่หน้าลูกค้าครับ',
+            ])->onlyInput('username');
+        }
+
+        return back()->withErrors([
+            'username' => 'ชื่อผู้ใช้งาน หรือ รหัสผ่านของแอดมินไม่ถูกต้อง',
+        ])->onlyInput('username');
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')->with('success', 'ออกจากระบบเรียบร้อยแล้ว');
+    }
+
     // 1. ฟังก์ชันพาลูกค้าไปหน้ายืนยันตัวตนของ LINE
     public function redirectToLine()
     {

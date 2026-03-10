@@ -47,7 +47,7 @@
                         <tr class="bg-pink-50/50 dark:bg-slate-900/50 text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wider border-b border-pink-100 dark:border-slate-700">
                             <th class="p-4 font-medium w-px whitespace-nowrap text-center">ลำดับ</th>
                             <th class="p-4 font-medium">ชื่อ-นามสกุล</th>
-                            <th class="p-4 font-medium">อีเมล</th>
+                            <th class="p-4 font-medium">ชื่อผู้ใช้งาน</th>
                             <th class="p-4 font-medium text-center">สิทธิ์การใช้งาน</th>
                             <th class="p-4 font-medium text-center whitespace-nowrap w-px">จัดการ</th>
                         </tr>
@@ -57,13 +57,13 @@
                             <tr class="hover:bg-pink-50/30 dark:hover:bg-slate-700/50 transition-colors">
                                 <td class="p-4 text-center text-gray-500 dark:text-gray-400 font-medium">{{ $index + 1 }}</td>
                                 <td class="p-4">
-                                    <p class="font-bold text-gray-800 dark:text-gray-100">{{ $user->name }}
+                                    <p class="font-bold text-gray-800 dark:text-gray-100">{{ $user->fullname }}
                                         @if(Auth::id() == $user->id) 
                                             <span class="text-xs ml-2 bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full">คุณเอง</span> 
                                         @endif
                                     </p>
                                 </td>
-                                <td class="p-4 text-gray-600 dark:text-gray-300">{{ $user->email }}</td>
+                                <td class="p-4 text-gray-600 dark:text-gray-300">{{ $user->username }}</td>
                                 <td class="p-4 text-center">
                                     @if($user->role === 'admin')
                                         <span class="bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-400 px-3 py-1 rounded-full text-sm font-medium border border-purple-200 dark:border-purple-800/50 shadow-sm"><i class="fa-solid fa-crown mr-1"></i> ผู้ดูแลระบบ (Admin)</span>
@@ -73,7 +73,7 @@
                                 </td>
                                 <td class="p-4 text-center whitespace-nowrap w-px">
                                     <div class="flex items-center gap-2 justify-center">
-                                        <button type="button" onclick="openEditModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ $user->role }}')" class="bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-400 px-3 py-1.5 rounded-lg transition-colors shadow-sm text-sm flex items-center gap-1">
+                                        <button type="button" onclick="openEditModal({{ $user->id }}, '{{ addslashes($user->fullname) }}', '{{ addslashes($user->username) }}', '{{ $user->role }}')" class="bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-400 px-3 py-1.5 rounded-lg transition-colors shadow-sm text-sm flex items-center gap-1">
                                             <i class="fa-solid fa-pen-to-square"></i> แก้ไข
                                         </button>
                                         
@@ -81,7 +81,7 @@
                                         <form action="{{ route('admin.staff.destroy', $user->id) }}" method="POST" class="m-0">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="button" onclick="confirmDelete(this.closest('form'), '{{ addslashes($user->name) }}')" class="bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-400 px-3 py-1.5 rounded-lg transition-colors shadow-sm text-sm flex items-center gap-1">
+                                            <button type="button" onclick="confirmDelete(this.closest('form'), '{{ addslashes($user->fullname) }}')" class="bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-400 px-3 py-1.5 rounded-lg transition-colors shadow-sm text-sm flex items-center gap-1">
                                                 <i class="fa-solid fa-trash"></i> ลบ
                                             </button>
                                         </form>
@@ -118,11 +118,11 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ชื่อ-นามสกุล <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" required class="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500">
+                        <input type="text" name="fullname" required class="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">อีเมล <span class="text-red-500">*</span></label>
-                        <input type="email" name="email" required class="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ชื่อผู้ใช้งาน <span class="text-red-500">*</span></label>
+                        <input type="text" name="username" required class="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">รหัสผ่าน <span class="text-red-500">*</span></label>
@@ -156,11 +156,11 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ชื่อ-นามสกุล <span class="text-red-500">*</span></label>
-                        <input type="text" id="edit_name" name="name" required class="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500">
+                        <input type="text" id="edit_fullname" name="fullname" required class="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">อีเมล <span class="text-red-500">*</span></label>
-                        <input type="email" id="edit_email" name="email" required class="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ชื่อผู้ใช้งาน <span class="text-red-500">*</span></label>
+                        <input type="text" id="edit_username" name="username" required class="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">สิทธิ์การใช้งาน <span class="text-red-500">*</span></label>
@@ -186,10 +186,10 @@
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-        function openEditModal(id, name, email, role) {
+        function openEditModal(id, fullname, username, role) {
             document.getElementById('editForm').action = `/admin/staff/${id}`;
-            document.getElementById('edit_name').value = name;
-            document.getElementById('edit_email').value = email;
+            document.getElementById('edit_fullname').value = fullname;
+            document.getElementById('edit_username').value = username;
             document.getElementById('edit_role').value = role;
             openModal('editStaffModal');
         }

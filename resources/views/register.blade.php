@@ -6,6 +6,7 @@
     <title>สมัครสมาชิก - บริการรับส่งซักผ้า</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     @vite(['resources/css/app.css'])
 </head>
@@ -84,6 +85,32 @@
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const alertBase = {
+                confirmButtonColor: '#1980d5',
+                confirmButtonText: 'รับทราบ',
+                customClass: { popup: 'rounded-3xl' }
+            };
+
+            @if(session('info'))
+                Swal.fire({
+                    ...alertBase,
+                    title: 'เชื่อมต่อ LINE สำเร็จ',
+                    text: @json(session('info')),
+                    icon: 'info'
+                });
+            @endif
+
+            @if($errors->any())
+                Swal.fire({
+                    ...alertBase,
+                    title: 'สมัครสมาชิกไม่สำเร็จ',
+                    text: @json($errors->first()),
+                    icon: 'error'
+                });
+            @endif
+        });
+
         function getLocation() {
             const gpsBtn = document.getElementById('gps-btn');
             const gpsText = document.getElementById('gps-text');

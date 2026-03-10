@@ -538,16 +538,21 @@ class AdminController extends Controller
 
     public function storeStaff(Request $request)
     {
+        $request->merge([
+            'fullname' => $request->input('fullname', $request->input('name')),
+            'username' => $request->input('username', $request->input('email')),
+        ]);
+
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'fullname' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username',
             'password' => 'required|string|min:8',
             'role' => 'required|in:admin,staff' // ต้องเลือกว่าจะเป็นแอดมินหรือพนักงาน
         ]);
 
         User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'fullname' => $request->fullname,
+            'username' => $request->username,
             'password' => Hash::make($request->password),
             'role' => $request->role,
         ]);
@@ -558,14 +563,20 @@ class AdminController extends Controller
     public function updateStaff(Request $request, $id)
     {
         $staff = User::findOrFail($id);
+
+        $request->merge([
+            'fullname' => $request->input('fullname', $request->input('name')),
+            'username' => $request->input('username', $request->input('email')),
+        ]);
+
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $staff->id,
+            'fullname' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username,' . $staff->id,
             'role' => 'required|in:admin,staff'
         ]);
 
-        $staff->name = $request->name;
-        $staff->email = $request->email;
+        $staff->fullname = $request->fullname;
+        $staff->username = $request->username;
         $staff->role = $request->role;
 
         if ($request->filled('password')) {

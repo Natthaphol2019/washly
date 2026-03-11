@@ -1,15 +1,20 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Models\AppSetting;
+use App\Models\AddonOption;
+use App\Models\Order;
+use App\Models\OrderLog;
+use App\Models\Package;
+use App\Models\User;
+use App\Notifications\SystemNotification;
+use App\Services\AppSettingService;
+use App\Services\DeliveryDistanceService;
+use App\Services\OrderDistanceBackfillService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
-use App\Models\Order;
-use App\Models\Package;
-use App\Models\AddonOption;
-use App\Models\User;
-use App\Notifications\SystemNotification;
-use App\Models\OrderLog; // 👈 เรียกใช้งาน OrderLog
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -158,6 +163,76 @@ class AdminController extends Controller
         // ดึงข้อมูลออเดอร์ทั้งหมด พร้อมข้อมูลลูกค้าและแพ็กเกจ (เรียงจากใหม่ไปเก่า)
         $orders = Order::with(['user', 'package'])->orderBy('created_at', 'desc')->get();
         return view('admin.orders', compact('orders'));
+    }
+
+    public function settings(AppSettingService $appSettingService)
+    {
+        $deliverySettings = $appSettingService->getDeliverySettings();
+        $missingDistanceOrders = Order::query()
+            ->whereNull('distance')
+            ->whereNotNull('pickup_latitude')
+            ->whereNotNull('pickup_longitude')
+            ->count();
+        $latestOrderWithCoordinates = Order::query()
+            ->with('user')
+            ->whereNotNull('pickup_latitude')
+            ->whereNotNull('pickup_longitude')
+            ->latest('created_at')
+            ->first();
+        $recentOrdersWithCoordinates = Order::query()
+            ->with('user')
+            ->whereNotNull('pickup_latitude')
+            ->whereNotNull('pickup_longitude')
+            ->latest('created_at')
+            ->limit(15)
+            ->get();
+        $shopCoordinates = [
+            'latitude' => $deliverySettings['shop_latitude'],
+            'longitude' => $deliverySettings['shop_longitude'],
+        ];
+
+        return view('admin.settings', compact('deliverySettings', 'missingDistanceOrders', 'shopCoordinates', 'latestOrderWithCoordinates', 'recentOrdersWithCoordinates'));
+    }
+
+    public function updateDeliverySettings(Request $request, AppSettingService $appSettingService)
+    {
+        $validated = $request->validate([
+            'free_radius_km' => 'required|numeric|min:0',
+            'rate_per_km' => 'required|numeric|min:0',
+            'shop_latitude' => 'required|numeric|between:-90,90',
+            'shop_longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        $appSettingService->updateDeliverySettings(
+            (float) $validated['free_radius_km'],
+            (float) $validated['rate_per_km'],
+            (float) $validated['shop_latitude'],
+            (float) $validated['shop_longitude']
+        );
+
+        return redirect()->route('admin.settings.index')->with('success', 'อัปเดตกติกาค่าส่งเรียบร้อยแล้ว');
+    }
+
+    public function previewDeliveryQuote(Request $request, DeliveryDistanceService $deliveryDistanceService)
+    {
+        $validated = $request->validate([
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        return response()->json(
+            $deliveryDistanceService->calculate($validated['latitude'], $validated['longitude'])
+        );
+    }
+
+    public function backfillOrderDistances(OrderDistanceBackfillService $orderDistanceBackfillService)
+    {
+        $result = $orderDistanceBackfillService->backfillMissingDistances();
+
+        return redirect()->route('admin.settings.index')->with(
+            'success',
+            'Backfill เสร็จแล้ว: อัปเดต ' . number_format($result['updated']) . ' รายการ, ข้าม ' . number_format($result['skipped']) . ' รายการ, คงเหลือ ' . number_format($result['remaining']) . ' รายการ'
+        );
     }
     // 2. ฟังก์ชันสำหรับอัปเดตสถานะผ้า และบันทึกประวัติ (Timeline)
     public function updateStatus(Request $request, $id)

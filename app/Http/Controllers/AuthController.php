@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\DeliveryDistanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -39,7 +40,7 @@ class AuthController extends Controller
         return view('register');
     }
 
-    public function register(Request $request)
+    public function register(Request $request, DeliveryDistanceService $deliveryDistanceService)
     {
         // 1. ตรวจสอบข้อมูล (Validation) ตามชื่อฟิลด์ในฟอร์ม HTML
         $validated = $request->validate([
@@ -47,9 +48,8 @@ class AuthController extends Controller
             'username' => 'required|string|max:255|unique:users,username', // ห้ามซ้ำกับคนอื่น
             'phone' => 'required|string|max:20',
             'address' => 'required|string',
-            'latitude' => 'nullable|string',
-            'longitude' => 'nullable|string',
-            'map_link' => 'nullable|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'password' => 'required|string|min:8|confirmed', // ต้องมี password_confirmation ส่งมาด้วย
         ], [
             // ข้อความแจ้งเตือนภาษาไทย (จะไปแสดงในกล่องแดงๆ หน้าเว็บ)
@@ -63,15 +63,18 @@ class AuthController extends Controller
             'password.confirmed' => 'รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน',
         ]);
 
+        $latitude = $deliveryDistanceService->normalizeCoordinate($validated['latitude'] ?? null, -90, 90);
+        $longitude = $deliveryDistanceService->normalizeCoordinate($validated['longitude'] ?? null, -180, 180);
+
         // 2. บันทึกข้อมูลลงฐานข้อมูล
         $user = User::create([
             'fullname' => $validated['fullname'],
             'username' => $validated['username'],
             'phone' => $validated['phone'],
             'address' => $validated['address'],
-            'latitude' => $validated['latitude'] ?? null,
-            'longitude' => $validated['longitude'] ?? null,
-            'map_link' => $validated['map_link'] ?? null,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'map_link' => $deliveryDistanceService->makeMapLink($latitude, $longitude),
             'password' => Hash::make($validated['password']), // เข้ารหัสผ่านเสมอ
         ]);
 

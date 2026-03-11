@@ -134,6 +134,25 @@
                                 </div>
                             </div>
 
+                            @if($order->distance !== null || $order->straight_line_distance_km !== null || $order->pickup_map_link)
+                                <div class="mb-5 rounded-xl bg-blue-50/80 dark:bg-slate-900/40 border border-blue-100 dark:border-slate-700 p-4">
+                                    <p class="text-xs font-bold text-blue-600 dark:text-blue-300 mb-2.5 uppercase tracking-wider">ข้อมูลการเดินทาง</p>
+                                    <div class="space-y-1.5 text-sm text-gray-700 dark:text-gray-300">
+                                        @if($order->straight_line_distance_km !== null)
+                                            <p><i class="fa-solid fa-location-crosshairs text-blue-500 mr-2"></i>ระยะเส้นตรงจากร้าน {{ number_format($order->straight_line_distance_km, 2) }} กม.</p>
+                                        @endif
+                                        @if($order->distance !== null)
+                                            <p><i class="fa-solid fa-motorcycle text-pink-500 mr-2"></i>ระยะทางขับรถ {{ number_format($order->distance, 2) }} กม.</p>
+                                        @endif
+                                        @if($order->pickup_map_link)
+                                            <a href="{{ $order->pickup_map_link }}" target="_blank" class="inline-flex items-center gap-2 text-blue-600 dark:text-blue-300 font-semibold hover:underline">
+                                                <i class="fa-solid fa-map-location-dot"></i> เปิดพิกัดจุดรับผ้า
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
+
                             @if (!empty($order->selected_addons))
                                 <div class="mb-5 rounded-xl bg-gray-50/80 dark:bg-slate-900/40 border border-gray-100 dark:border-slate-700 p-4">
                                     <p class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2.5 uppercase tracking-wider">เมนูเสริมที่เลือก</p>

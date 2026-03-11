@@ -125,5 +125,11 @@
                 alert("เบราว์เซอร์ของคุณไม่รองรับการปักหมุด GPS ครับ");
             }
         }
+
+        document.getElementById('pickup_address')?.addEventListener('input', function () {
+            document.getElementById('latitude').value = '';
+            document.getElementById('longitude').value = '';
+            document.getElementById('map_link').value = '';
+        });
     </script>
 @endsection

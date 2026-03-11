@@ -34,7 +34,10 @@
             <div class="h-16 flex items-center justify-between px-6 bg-slate-950/50 border-b border-slate-800">
                 <a href="{{ route('admin.dashboard') }}"
                     class="text-xl font-bold washly-brand-text flex items-center gap-2">
-                    <i class="fa-solid fa-screwdriver-wrench"></i> Washly Admin
+                    <span class="h-10 w-28 overflow-hidden flex items-center">
+                        <img src="{{ asset('Brand.png') }}" alt="Washly Logo" class="h-20 w-auto max-w-none -ml-4 drop-shadow-sm">
+                    </span>
+                    <span class="text-base font-semibold text-sky-100">Admin</span>
                 </a>
                 <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white">
                     <i class="fa-solid fa-xmark text-xl"></i>
@@ -70,6 +73,12 @@
                     <i class="fa-solid fa-user-tie w-5 text-center"></i>
                     <span class="font-medium">จัดการพนักงาน</span>
                 </a>
+
+                <a href="{{ route('admin.settings.index') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {{ request()->routeIs('admin.settings.*') ? 'washly-brand-btn text-white shadow-lg shadow-sky-400/30' : 'hover:bg-slate-800 hover:text-white' }}">
+                    <i class="fa-solid fa-sliders w-5 text-center"></i>
+                    <span class="font-medium">ตั้งค่าระบบจัดส่ง</span>
+                </a>
             </nav>
 
             <div class="p-4 border-t border-slate-800 bg-slate-900/50">
@@ -91,10 +100,15 @@
             <header
                 class="h-16 bg-white/80 dark:bg-slate-800 shadow-sm border-b border-sky-100 dark:border-slate-700 flex items-center justify-between px-4 sm:px-6 transition-colors z-30 washly-card">
 
-                <button onclick="toggleSidebar()"
-                    class="md:hidden text-gray-500 dark:text-gray-400 hover:text-sky-600 focus:outline-none p-2 rounded-lg bg-gray-50 dark:bg-slate-700">
-                    <i class="fa-solid fa-bars text-xl"></i>
-                </button>
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()"
+                        class="md:hidden text-gray-500 dark:text-gray-400 hover:text-sky-600 focus:outline-none p-2 rounded-lg bg-gray-50 dark:bg-slate-700">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Dashboard</span>
+                    </a>
+                </div>
 
                 <div class="flex-1"></div>
 

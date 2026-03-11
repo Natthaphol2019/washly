@@ -60,6 +60,10 @@ Route::middleware('auth')->group(function () {
 
         // 📊 ภาพรวมระบบ (Dashboard)
         Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+        Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings.index');
+        Route::post('/settings/delivery', [AdminController::class, 'updateDeliverySettings'])->name('admin.settings.delivery.update');
+        Route::post('/settings/delivery/preview', [AdminController::class, 'previewDeliveryQuote'])->name('admin.settings.delivery.preview');
+        Route::post('/settings/delivery/backfill', [AdminController::class, 'backfillOrderDistances'])->name('admin.settings.delivery.backfill');
 
         // 🔄 เผื่อโค้ดเก่าใช้ admin.main ให้เด้งกลับมาหน้า Dashboard (ป้องกันลิงก์พัง)
         Route::get('/main', function () {
@@ -110,6 +114,7 @@ Route::middleware('auth')->group(function () {
 
         // 🧺 จองคิวซักผ้า
         Route::get('/book', [BookingController::class, 'showBookingForm'])->name('customer.book');
+        Route::get('/book/delivery-quote', [BookingController::class, 'deliveryQuote'])->name('customer.book.delivery_quote');
         Route::post('/book', [BookingController::class, 'store'])->name('customer.book.store');
 
         // 🛵 ประวัติออเดอร์ & อัปโหลดสลิป

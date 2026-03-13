@@ -26,13 +26,12 @@
                 <p class="font-medium text-green-800 dark:text-green-400">{{ session('success') }}</p>
             </div>
         @endif
-        @if ($errors->any())
-            <div class="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-4 rounded-r-xl shadow-sm">
-                <ul class="list-disc list-inside text-sm text-red-600 dark:text-red-400">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+
+        @if (session('error'))
+            <div
+                class="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-4 rounded-r-xl shadow-sm flex items-center gap-3">
+                <i class="fa-solid fa-triangle-exclamation text-red-500 text-xl"></i>
+                <p class="font-medium text-red-800 dark:text-red-400">{{ session('error') }}</p>
             </div>
         @endif
 
@@ -57,9 +56,20 @@
                                 <td class="p-4 text-center text-gray-500 dark:text-gray-400 font-medium">{{ $index + 1 }}
                                 </td>
                                 <td class="p-4">
-                                    <p class="font-bold text-gray-800 dark:text-gray-100 text-lg">{{ $package->name }}</p>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                                        {{ $package->description ?? '-' }}</p>
+                                    <div class="flex items-center gap-4">
+                                        @if($package->image_path)
+                                            <img src="{{ asset('storage/' . $package->image_path) }}" alt="{{ $package->name }}" class="w-16 h-16 rounded-xl object-cover border border-gray-200 dark:border-slate-600 shadow-sm shrink-0">
+                                        @else
+                                            <div class="w-16 h-16 rounded-xl bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 flex items-center justify-center shrink-0">
+                                                <i class="fa-solid fa-shirt text-2xl text-gray-300 dark:text-gray-500"></i>
+                                            </div>
+                                        @endif
+                                        <div>
+                                            <p class="font-bold text-gray-800 dark:text-gray-100 text-lg">{{ $package->name }}</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                                                {{ $package->description ?? '-' }}</p>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td class="p-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
                                     {{ $detergentOptions->firstWhere('code', $package->default_detergent_code)?->name ?? 'ใช้ค่าเริ่มต้นระบบ' }}
@@ -69,16 +79,20 @@
                                         class="text-xl font-black text-pink-500 dark:text-pink-400">฿{{ number_format($package->price) }}</span>
                                 </td>
                                 <td class="p-4 text-center whitespace-nowrap">
-                                    @if($package->is_active)
-                                        <span class="bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 px-3 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-eye"></i> เปิดใช้งาน</span>
+                                    @if ($package->is_active)
+                                        <span
+                                            class="bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 px-3 py-1 rounded-full text-xs font-bold"><i
+                                                class="fa-solid fa-eye"></i> เปิดใช้งาน</span>
                                     @else
-                                        <span class="bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400 px-3 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-eye-slash"></i> ซ่อน</span>
+                                        <span
+                                            class="bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400 px-3 py-1 rounded-full text-xs font-bold"><i
+                                                class="fa-solid fa-eye-slash"></i> ซ่อน</span>
                                     @endif
                                 </td>
                                 <td class="p-4 text-center whitespace-nowrap w-px">
                                     <div class="flex items-center gap-2 justify-center">
                                         <button type="button"
-                                            onclick="openEditModal({{ $package->id }}, '{{ addslashes($package->name) }}', {{ $package->price }}, '{{ addslashes($package->description) }}', '{{ $package->default_detergent_code }}', {{ $package->is_active ? 'true' : 'false' }})"
+                                            onclick="openEditModal({{ $package->id }}, '{{ addslashes($package->name) }}', {{ $package->price }}, '{{ preg_replace("/\r|\n/", ' ', addslashes($package->description)) }}', '{{ $package->default_detergent_code }}', {{ $package->is_active ? 'true' : 'false' }})"
                                             class="bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-400 px-3 py-1.5 rounded-lg transition-colors shadow-sm text-sm flex items-center gap-1">
                                             <i class="fa-solid fa-pen-to-square"></i> แก้ไข
                                         </button>
@@ -121,7 +135,7 @@
             <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center gap-2">
                 <i class="fa-solid fa-plus-circle text-pink-500"></i> เพิ่มแพ็กเกจใหม่
             </h2>
-            <form action="{{ route('admin.packages.store') }}" method="POST">
+            <form action="{{ route('admin.packages.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="space-y-4">
                     <div>
@@ -142,6 +156,13 @@
                         <textarea name="description" rows="3"
                             class="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"></textarea>
                     </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">รูปภาพแพ็กเกจ (ตัวเลือก)</label>
+                        <input type="file" name="image" accept="image/png,image/jpeg,image/webp"
+                               class="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100 cursor-pointer">
+                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">น้ำยาอัตโนมัติเมื่อ
                             "ลูกค้าไม่มีน้ำยา"</label>
@@ -156,10 +177,13 @@
                         </select>
                     </div>
                     <div class="pt-2">
-                        <label class="flex items-center gap-3 p-3 border border-gray-200 dark:border-slate-600 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
-                            <input type="checkbox" name="is_active" value="1" checked class="w-5 h-5 text-pink-500 rounded focus:ring-pink-500 border-gray-300 bg-white">
+                        <label
+                            class="flex items-center gap-3 p-3 border border-gray-200 dark:border-slate-600 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+                            <input type="checkbox" name="is_active" value="1" checked
+                                class="w-5 h-5 text-pink-500 rounded focus:ring-pink-500 border-gray-300 bg-white">
                             <div>
-                                <p class="font-bold text-gray-800 dark:text-gray-100 text-sm">เปิดใช้งาน (แสดงให้ลูกค้าเห็น)</p>
+                                <p class="font-bold text-gray-800 dark:text-gray-100 text-sm">เปิดใช้งาน (แสดงให้ลูกค้าเห็น)
+                                </p>
                                 <p class="text-xs text-gray-500">หากไม่ติ๊ก แพ็กเกจนี้จะถูกซ่อนจากหน้าจองคิว</p>
                             </div>
                         </label>
@@ -183,7 +207,7 @@
             <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center gap-2">
                 <i class="fa-solid fa-pen-to-square text-pink-500"></i> แก้ไขแพ็กเกจ
             </h2>
-            <form id="editForm" method="POST">
+            <form id="editForm" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <div class="space-y-4">
@@ -205,6 +229,14 @@
                         <textarea id="edit_description" name="description" rows="3"
                             class="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"></textarea>
                     </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">เปลี่ยนรูปภาพแพ็กเกจ (ตัวเลือก)</label>
+                        <input type="file" name="image" accept="image/png,image/jpeg,image/webp"
+                               class="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2 outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100 cursor-pointer">
+                        <p class="text-[11px] text-gray-500 mt-1">* หากไม่ต้องการเปลี่ยนรูปภาพ ให้เว้นว่างไว้</p>
+                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">น้ำยาอัตโนมัติเมื่อ
                             "ลูกค้าไม่มีน้ำยา"</label>
@@ -219,10 +251,13 @@
                         </select>
                     </div>
                     <div class="pt-2">
-                        <label class="flex items-center gap-3 p-3 border border-gray-200 dark:border-slate-600 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
-                            <input type="checkbox" id="edit_is_active" name="is_active" value="1" class="w-5 h-5 text-pink-500 rounded focus:ring-pink-500 border-gray-300 bg-white">
+                        <label
+                            class="flex items-center gap-3 p-3 border border-gray-200 dark:border-slate-600 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+                            <input type="checkbox" id="edit_is_active" name="is_active" value="1"
+                                class="w-5 h-5 text-pink-500 rounded focus:ring-pink-500 border-gray-300 bg-white">
                             <div>
-                                <p class="font-bold text-gray-800 dark:text-gray-100 text-sm">เปิดใช้งาน (แสดงให้ลูกค้าเห็น)</p>
+                                <p class="font-bold text-gray-800 dark:text-gray-100 text-sm">เปิดใช้งาน
+                                    (แสดงให้ลูกค้าเห็น)</p>
                                 <p class="text-xs text-gray-500">หากไม่ติ๊ก แพ็กเกจนี้จะถูกซ่อนจากหน้าจองคิว</p>
                             </div>
                         </label>
@@ -267,7 +302,9 @@
                         </h3>
 
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">รหัสเมนู (Auto)</label>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">รหัสเมนู
+                                (Auto)
+                            </label>
                             <input type="text" name="code" placeholder="ระบบสร้างให้อัตโนมัติ" readonly
                                 class="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-sm">
                         </div>
@@ -279,25 +316,30 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">ราคา (บาท)</label>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">ราคา
+                                (บาท)</label>
                             <input type="number" name="unit_price" min="0" required placeholder="เช่น 15"
                                 class="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-sm">
                         </div>
 
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">รูปเมนู (ถ้ามี)</label>
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">รูปเมนู
+                                (ถ้ามี)</label>
                             <input type="file" name="image" accept="image/png,image/jpeg,image/webp"
                                 class="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 text-sm">
                         </div>
 
                         <div class="flex items-center justify-between">
-                            <label class="text-xs flex items-center gap-2"><input type="checkbox" name="is_active" value="1" checked> ใช้งาน</label>
+                            <label class="text-xs flex items-center gap-2"><input type="checkbox" name="is_active"
+                                    value="1" checked> ใช้งาน</label>
                             @if ($category !== 'service')
-                                <label class="text-xs flex items-center gap-2"><input type="checkbox" name="is_default" value="1"> ตั้งเป็นค่าเริ่มต้น</label>
+                                <label class="text-xs flex items-center gap-2"><input type="checkbox" name="is_default"
+                                        value="1"> ตั้งเป็นค่าเริ่มต้น</label>
                             @endif
                         </div>
 
-                        <button type="submit" class="w-full bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-medium">เพิ่ม{{ $meta['title'] }}</button>
+                        <button type="submit"
+                            class="w-full bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-medium">เพิ่ม{{ $meta['title'] }}</button>
                     </form>
                 @endforeach
             </div>
@@ -328,10 +370,13 @@
                         </thead>
                         <tbody>
                             @forelse($items as $addon)
-                                <tr class="border-b border-gray-100 dark:border-slate-700/60 hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
-                                    
+                                <tr
+                                    class="border-b border-gray-100 dark:border-slate-700/60 hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
+
                                     <td class="hidden">
-                                        <form id="form-addon-{{ $addon->id }}" action="{{ route('admin.addons.update', $addon->id) }}" method="POST" enctype="multipart/form-data">
+                                        <form id="form-addon-{{ $addon->id }}"
+                                            action="{{ route('admin.addons.update', $addon->id) }}" method="POST"
+                                            enctype="multipart/form-data">
                                             @csrf
                                             @method('PUT')
                                             <input type="hidden" name="category" value="{{ $category }}">
@@ -339,55 +384,75 @@
                                     </td>
 
                                     <td class="py-3 pr-2 text-gray-500 font-medium">{{ $addon->code }}</td>
-                                    
+
                                     <td class="py-3 pr-2">
-                                        <input form="form-addon-{{ $addon->id }}" type="text" name="name" value="{{ $addon->name }}" class="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 focus:ring-1 focus:ring-pink-500 focus:border-pink-500 outline-none transition-shadow">
+                                        <input form="form-addon-{{ $addon->id }}" type="text" name="name"
+                                            value="{{ $addon->name }}"
+                                            class="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-700 focus:ring-1 focus:ring-pink-500 focus:border-pink-500 outline-none transition-shadow">
                                     </td>
-                                    
+
                                     <td class="py-3 pr-2">
                                         <div class="flex items-center gap-3">
-                                            @if($addon->image_path)
-                                                <img src="{{ asset('storage/' . $addon->image_path) }}" alt="{{ $addon->name }}" class="w-10 h-10 rounded-lg object-cover border border-gray-200 dark:border-slate-600 shadow-sm">
+                                            @if ($addon->image_path)
+                                                <img src="{{ asset('storage/' . $addon->image_path) }}"
+                                                    alt="{{ $addon->name }}"
+                                                    class="w-10 h-10 rounded-lg object-cover border border-gray-200 dark:border-slate-600 shadow-sm">
                                             @else
-                                                <div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 flex items-center justify-center shadow-sm">
+                                                <div
+                                                    class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 flex items-center justify-center shadow-sm">
                                                     <i class="fa-solid fa-image text-gray-300 dark:text-gray-500"></i>
                                                 </div>
                                             @endif
-                                            <input form="form-addon-{{ $addon->id }}" type="file" name="image" accept="image/png,image/jpeg,image/webp" class="text-[11px] w-44 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100 cursor-pointer">
+                                            <input form="form-addon-{{ $addon->id }}" type="file" name="image"
+                                                accept="image/png,image/jpeg,image/webp"
+                                                class="text-[11px] w-44 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100 cursor-pointer">
                                         </div>
                                     </td>
-                                    
+
                                     <td class="py-3 pr-2">
                                         <div class="relative">
                                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">฿</span>
-                                            <input form="form-addon-{{ $addon->id }}" type="number" min="0" name="unit_price" value="{{ $addon->unit_price }}" class="w-full border border-gray-300 dark:border-slate-600 rounded-lg pl-7 pr-2 py-1.5 bg-white dark:bg-slate-700 focus:ring-1 focus:ring-pink-500 focus:border-pink-500 outline-none transition-shadow">
+                                            <input form="form-addon-{{ $addon->id }}" type="number" min="0"
+                                                name="unit_price" value="{{ $addon->unit_price }}"
+                                                class="w-full border border-gray-300 dark:border-slate-600 rounded-lg pl-7 pr-2 py-1.5 bg-white dark:bg-slate-700 focus:ring-1 focus:ring-pink-500 focus:border-pink-500 outline-none transition-shadow">
                                         </div>
                                     </td>
-                                    
+
                                     <td class="py-3 pr-2">
                                         <label class="inline-flex items-center gap-2 cursor-pointer group">
-                                            <input form="form-addon-{{ $addon->id }}" type="checkbox" name="is_active" value="1" {{ $addon->is_active ? 'checked' : '' }} class="w-4 h-4 text-pink-500 border-gray-300 rounded focus:ring-pink-500 transition-colors"> 
-                                            <span class="text-gray-700 dark:text-gray-300 group-hover:text-pink-600 transition-colors">ใช้งาน</span>
+                                            <input form="form-addon-{{ $addon->id }}" type="checkbox"
+                                                name="is_active" value="1" {{ $addon->is_active ? 'checked' : '' }}
+                                                class="w-4 h-4 text-pink-500 border-gray-300 rounded focus:ring-pink-500 transition-colors">
+                                            <span
+                                                class="text-gray-700 dark:text-gray-300 group-hover:text-pink-600 transition-colors">ใช้งาน</span>
                                         </label>
                                     </td>
-                                    
+
                                     <td class="py-3 pr-2">
-                                        @if($category !== 'service')
+                                        @if ($category !== 'service')
                                             <label class="inline-flex items-center gap-2 cursor-pointer group">
-                                                <input form="form-addon-{{ $addon->id }}" type="checkbox" name="is_default" value="1" {{ $addon->is_default ? 'checked' : '' }} class="w-4 h-4 text-pink-500 border-gray-300 rounded focus:ring-pink-500 transition-colors"> 
-                                                <span class="text-gray-700 dark:text-gray-300 group-hover:text-pink-600 transition-colors">Default</span>
+                                                <input form="form-addon-{{ $addon->id }}" type="checkbox"
+                                                    name="is_default" value="1"
+                                                    {{ $addon->is_default ? 'checked' : '' }}
+                                                    class="w-4 h-4 text-pink-500 border-gray-300 rounded focus:ring-pink-500 transition-colors">
+                                                <span
+                                                    class="text-gray-700 dark:text-gray-300 group-hover:text-pink-600 transition-colors">Default</span>
                                             </label>
                                         @else
                                             <span class="text-gray-300 dark:text-gray-600">-</span>
                                         @endif
                                     </td>
-                                    
+
                                     <td class="py-3 text-right">
                                         <div class="inline-flex items-center gap-2">
-                                            <button type="button" onclick="confirmUpdateAddon(document.getElementById('form-addon-{{ $addon->id }}'), '{{ $addon->name }}')" class="bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-600 hover:text-white dark:bg-indigo-900/40 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-600 dark:hover:text-white px-3 py-1.5 rounded-lg transition-all duration-200 text-xs font-bold shadow-sm flex items-center gap-1">
+                                            <button type="button"
+                                                onclick="confirmUpdateAddon(document.getElementById('form-addon-{{ $addon->id }}'), '{{ $addon->name }}')"
+                                                class="bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-600 hover:text-white dark:bg-indigo-900/40 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-600 dark:hover:text-white px-3 py-1.5 rounded-lg transition-all duration-200 text-xs font-bold shadow-sm flex items-center gap-1">
                                                 <i class="fa-solid fa-floppy-disk"></i> บันทึก
                                             </button>
-                                            <button type="button" onclick="confirmDeleteAddon('{{ route('admin.addons.destroy', $addon->id) }}', '{{ $addon->name }}')" class="bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-600 hover:text-white dark:bg-rose-900/40 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-600 dark:hover:text-white px-3 py-1.5 rounded-lg transition-all duration-200 text-xs font-bold shadow-sm flex items-center gap-1">
+                                            <button type="button"
+                                                onclick="confirmDeleteAddon('{{ route('admin.addons.destroy', $addon->id) }}', '{{ $addon->name }}')"
+                                                class="bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-600 hover:text-white dark:bg-rose-900/40 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-600 dark:hover:text-white px-3 py-1.5 rounded-lg transition-all duration-200 text-xs font-bold shadow-sm flex items-center gap-1">
                                                 <i class="fa-solid fa-trash"></i> ลบ
                                             </button>
                                         </div>
@@ -397,8 +462,10 @@
                                 <tr>
                                     <td colspan="7" class="py-8 text-center text-gray-400">
                                         <div class="flex flex-col items-center justify-center gap-2">
-                                            <div class="w-12 h-12 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-1">
-                                                <i class="fa-solid fa-box-open text-xl text-gray-300 dark:text-gray-600"></i>
+                                            <div
+                                                class="w-12 h-12 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-1">
+                                                <i
+                                                    class="fa-solid fa-box-open text-xl text-gray-300 dark:text-gray-600"></i>
                                             </div>
                                             <p>ยังไม่มี{{ $meta['title'] }}ในระบบ</p>
                                         </div>

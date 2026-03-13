@@ -38,46 +38,75 @@
 
                 <div class="lg:col-span-8 space-y-8">
 
-                    <div
-                        class="rounded-3xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 md:p-8 shadow-sm">
+                    <div class="rounded-3xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 md:p-8 shadow-sm">
                         <div class="flex items-center gap-4 mb-6">
-                            <div
-                                class="shrink-0 bg-gradient-to-br from-pink-400 to-pink-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-md text-lg">
-                                1</div>
-                            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">เลือกขนาดแพ็กเกจ
+                            <div class="shrink-0 bg-gradient-to-br from-pink-400 to-pink-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-md text-lg">
+                                1
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
+                                เลือกขนาดแพ็กเกจ
                             </h3>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pl-0 md:pl-14">
+                        <div class="mb-6 pl-0 md:pl-14">
+                            <div class="flex overflow-x-auto pb-3 hide-scrollbar gap-2 -mx-1 px-1 sm:mx-0 sm:px-0 sm:flex-wrap">
+                                <button type="button" class="pkg-filter-btn shrink-0 whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold bg-pink-500 text-white border border-transparent shadow-sm transition-all" data-filter="all">ทั้งหมด</button>
+                                <button type="button" class="pkg-filter-btn shrink-0 whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold bg-white text-gray-600 border border-gray-200 hover:bg-pink-50 hover:text-pink-600 hover:border-pink-200 transition-all" data-filter="9-10">9-10 kg</button>
+                                <button type="button" class="pkg-filter-btn shrink-0 whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold bg-white text-gray-600 border border-gray-200 hover:bg-pink-50 hover:text-pink-600 hover:border-pink-200 transition-all" data-filter="13-15">13-15 kg</button>
+                                <button type="button" class="pkg-filter-btn shrink-0 whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold bg-white text-gray-600 border border-gray-200 hover:bg-pink-50 hover:text-pink-600 hover:border-pink-200 transition-all" data-filter="18-20">18-20 kg</button>
+                                <button type="button" class="pkg-filter-btn shrink-0 whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold bg-white text-gray-600 border border-gray-200 hover:bg-pink-50 hover:text-pink-600 hover:border-pink-200 transition-all" data-filter="25-27">25-27 kg</button>
+                                <button type="button" class="pkg-filter-btn shrink-0 whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold bg-white text-gray-600 border border-gray-200 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 transition-all" data-filter="พับ">แบบพับด้วย</button>
+                            </div>
+                        </div>
+
+                        <div class="flex overflow-x-auto custom-scrollbar pb-6 pt-2 gap-5 pl-0 md:pl-14 snap-x">
                             @foreach ($packages as $package)
-                                <label class="cursor-pointer relative group block h-full">
+                                <label class="cursor-pointer relative group block h-full shrink-0 w-[260px] md:w-[280px] snap-start package-card-wrapper" data-name="{{ $package->name }}">
                                     <input type="radio" name="package_id" value="{{ $package->id }}"
                                         data-package-price="{{ (float) $package->price }}"
                                         data-default-addon-name="{{ $packageDefaultAddonMap[$package->id] ?? '' }}"
                                         class="peer sr-only package-option" required
                                         {{ old('package_id') == $package->id ? 'checked' : '' }}>
 
-                                    <div
-                                        class="h-full p-6 rounded-2xl border-2 border-gray-100 dark:border-slate-600 bg-gray-50/50 dark:bg-slate-700/30 hover:border-pink-300 dark:hover:border-pink-500 peer-checked:border-pink-500 peer-checked:bg-pink-50/50 dark:peer-checked:bg-slate-700/80 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md text-center flex flex-col justify-between">
+                                    <div class="h-full p-6 rounded-2xl border-2 border-gray-100 dark:border-slate-600 bg-gray-50/50 dark:bg-slate-700/30 hover:border-pink-300 dark:hover:border-pink-500 peer-checked:border-pink-500 peer-checked:bg-pink-50/50 dark:peer-checked:bg-slate-700/80 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md text-center flex flex-col justify-between">
                                         <div>
-                                            <div
-                                                class="w-14 h-14 mx-auto bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-sm mb-4 transition-colors peer-checked:shadow-pink-200">
-                                                <i
-                                                    class="fa-solid fa-shirt text-2xl text-gray-400 dark:text-gray-500 peer-checked:text-pink-500 transition-colors"></i>
+                                            <div class="w-20 h-20 mx-auto bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm mb-4 transition-all peer-checked:shadow-pink-200 overflow-hidden border border-gray-100 dark:border-slate-600">
+                                                @if ($package->image_path)
+                                                    <img src="{{ asset('storage/' . $package->image_path) }}" class="w-full h-full object-cover">
+                                                @else
+                                                    <i class="fa-solid fa-shirt text-3xl text-gray-300 dark:text-gray-500 peer-checked:text-pink-500 transition-colors"></i>
+                                                @endif
                                             </div>
+
                                             <h4 class="font-bold text-lg text-gray-800 dark:text-gray-100 mb-2">
-                                                {{ $package->name }}</h4>
+                                                {{ $package->name }}
+                                            </h4>
                                             <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                                                {{ $package->description }}</p>
+                                                {{ $package->description }}
+                                            </p>
                                         </div>
                                         <div class="mt-6 pt-4 border-t border-gray-200 dark:border-slate-600">
                                             <p class="text-2xl font-black text-pink-600 dark:text-pink-400">
-                                                ฿{{ number_format($package->price) }}</p>
-                                        </div>
-                                        <div
-                                            class="absolute top-4 right-4 scale-0 opacity-0 peer-checked:scale-100 peer-checked:opacity-100 text-pink-500 transition-all duration-300">
-                                            <i
-                                                class="fa-solid fa-circle-check text-2xl bg-white dark:bg-slate-800 rounded-full shadow-sm"></i>
+                                                ฿{{ number_format($package->price) }}
+                                            </p>
+
+                                            <div class="mt-3 pt-3 border-t border-dashed border-gray-200 dark:border-slate-600 flex items-center justify-between">
+                                                <p class="text-[11px] font-bold text-gray-500 dark:text-gray-400">
+                                                    เวลาอบเพิ่ม <span class="text-pink-500">+10฿</span>
+                                                </p>
+                                                <div class="flex items-center border border-gray-200 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-800 z-20 relative">
+                                                    <button type="button" class="pkg-qty-btn px-2.5 py-1 text-gray-500 hover:text-pink-500 transition-colors" data-step="-1" data-pkg="{{ $package->id }}">
+                                                        <i class="fa-solid fa-minus text-[10px] pointer-events-none"></i>
+                                                    </button>
+                                                    <input type="number" name="extra_dry_qty[{{ $package->id }}]" id="extra-dry-{{ $package->id }}" value="0" min="0" max="10" class="w-6 text-center text-xs font-bold border-none p-0 focus:ring-0 bg-transparent pointer-events-none" readonly>
+                                                    <button type="button" class="pkg-qty-btn px-2.5 py-1 text-gray-500 hover:text-pink-500 transition-colors" data-step="1" data-pkg="{{ $package->id }}">
+                                                        <i class="fa-solid fa-plus text-[10px] pointer-events-none"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            </div>
+                                        <div class="absolute top-4 right-4 scale-0 opacity-0 peer-checked:scale-100 peer-checked:opacity-100 text-pink-500 transition-all duration-300">
+                                            <i class="fa-solid fa-circle-check text-2xl bg-white dark:bg-slate-800 rounded-full shadow-sm"></i>
                                         </div>
                                     </div>
                                 </label>
@@ -349,81 +378,101 @@
                         </div>
                     </div>
 
-                    <div
-                        class="rounded-3xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 md:p-8 shadow-sm">
+                    <div class="rounded-3xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 md:p-8 shadow-sm">
                         <div class="flex items-center gap-4 mb-6">
-                            <div
-                                class="shrink-0 bg-gradient-to-br from-pink-400 to-pink-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-md text-lg">
+                            <div class="shrink-0 bg-gradient-to-br from-pink-400 to-pink-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-md text-lg">
                                 3</div>
-                            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
-                                เลือกรอบเวลารับผ้า</h3>
+                            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">เลือกรอบเวลารับผ้า</h3>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pl-0 md:pl-14">
                             @foreach ($timeSlots as $slot)
                                 <label class="cursor-pointer relative group">
-                                    <input type="radio" name="time_slot_id" value="{{ $slot->id }}"
-                                        class="peer sr-only" required
-                                        {{ old('time_slot_id') == $slot->id ? 'checked' : '' }}>
-                                    <div
-                                        class="px-5 py-4 rounded-2xl border-2 border-gray-100 dark:border-slate-600 bg-gray-50/50 dark:bg-slate-700/30 hover:border-pink-300 peer-checked:border-pink-500 peer-checked:bg-pink-50 dark:peer-checked:bg-slate-700 transition-all duration-200 flex items-center justify-between group-hover:shadow-sm">
+                                    <input type="radio" name="time_slot_id" value="{{ $slot->id }}" class="peer sr-only time-slot-radio" required {{ old('time_slot_id') == $slot->id ? 'checked' : '' }}>
+                                    <div class="px-5 py-4 rounded-2xl border-2 border-gray-100 dark:border-slate-600 bg-gray-50/50 dark:bg-slate-700/30 hover:border-pink-300 peer-checked:border-pink-500 peer-checked:bg-pink-50 dark:peer-checked:bg-slate-700 transition-all duration-200 flex items-center justify-between group-hover:shadow-sm">
                                         <div class="flex items-center gap-3">
-                                            <div
-                                                class="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm text-gray-400 peer-checked:text-pink-500 transition-colors">
+                                            <div class="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm text-gray-400 peer-checked:text-pink-500 transition-colors">
                                                 <i class="fa-regular fa-clock"></i>
                                             </div>
-                                            <span
-                                                class="font-bold text-gray-700 dark:text-gray-200">{{ $slot->round_name }}</span>
+                                            <span class="font-bold text-gray-700 dark:text-gray-200 slot-name-text">{{ $slot->round_name }}</span>
                                         </div>
-                                        <i
-                                            class="fa-solid fa-check-circle text-xl text-pink-500 scale-0 opacity-0 peer-checked:scale-100 peer-checked:opacity-100 transition-all duration-300"></i>
+                                        <i class="fa-solid fa-check-circle text-xl text-pink-500 scale-0 opacity-0 peer-checked:scale-100 peer-checked:opacity-100 transition-all duration-300"></i>
                                     </div>
                                 </label>
                             @endforeach
                         </div>
+
+                        @if(isset($todayQueues))
+                        <div class="pl-0 md:pl-14 mt-8 pt-6 border-t border-dashed border-gray-200 dark:border-slate-700">
+                            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                <h4 class="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                                    <i class="fa-solid fa-users text-pink-500"></i> สถานะคิววันนี้
+                                </h4>
+                                <span id="queue-counter-badge" class="text-sm font-semibold bg-pink-100 text-pink-700 dark:bg-slate-700 dark:text-pink-400 px-3 py-1.5 rounded-full shadow-sm">
+                                    แสดงทั้งหมด {{ $todayQueues->count() }} คิว
+                                </span>
+                            </div>
+
+                            @if($todayQueues->isEmpty())
+                                <div class="text-center py-5 bg-gray-50 dark:bg-slate-700/30 rounded-2xl border border-dashed border-gray-200 dark:border-slate-600">
+                                    <p class="text-gray-500 dark:text-gray-400 text-sm">ยังไม่มีคิวในวันนี้ 🎉 คุณสามารถจองเป็นคิวแรกได้เลย!</p>
+                                </div>
+                            @else
+                                <div id="queue-list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    @foreach($todayQueues as $index => $queue)
+                                        <div class="queue-item flex items-center gap-3 p-3 rounded-2xl border transition-colors {{ $queue->user_id == Auth::id() ? 'border-pink-300 bg-pink-50/50 dark:bg-slate-700/80 dark:border-pink-500/50' : 'border-gray-100 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/30' }}" 
+                                             data-slot-id="{{ $queue->time_slot_id }}">
+                                            
+                                            <div class="shrink-0 w-8 h-8 {{ $queue->user_id == Auth::id() ? 'bg-pink-500 text-white' : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-gray-300' }} rounded-full flex items-center justify-center font-bold text-xs shadow-sm border border-gray-200 dark:border-slate-600">
+                                                {{ $index + 1 }}
+                                            </div>
+                                            
+                                            <div class="flex-1 min-w-0">
+                                                <p class="font-bold text-sm text-gray-800 dark:text-gray-100 truncate">
+                                                    @if($queue->user_id == Auth::id())
+                                                        <span class="text-pink-600 dark:text-pink-400">คิวของคุณ</span>
+                                                    @else
+                                                        คุณ {{ mb_substr($queue->user->fullname ?? 'ลูกค้า', 0, 3) }}***
+                                                    @endif
+                                                </p>
+                                                <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                                    <i class="fa-regular fa-clock"></i> {{ $queue->timeSlot->round_name ?? 'ไม่ระบุ' }}
+                                                </p>
+                                            </div>
+                                            
+                                            @php
+                                                $statusColors = [
+                                                    'pending' => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400',
+                                                    'picked_up' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
+                                                    'processing' => 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
+                                                    'delivering' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400',
+                                                    'completed' => 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
+                                                ];
+                                                $statusLabels = [
+                                                    'pending' => 'รอรับ',
+                                                    'picked_up' => 'รับแล้ว',
+                                                    'processing' => 'ซัก/อบ',
+                                                    'delivering' => 'กำลังส่ง',
+                                                    'completed' => 'เสร็จ',
+                                                ];
+                                            @endphp
+                                            <div class="shrink-0">
+                                                <span class="text-[10px] font-bold px-2 py-1 rounded-md {{ $statusColors[$queue->status] ?? 'bg-gray-100 text-gray-600' }}">
+                                                    {{ $statusLabels[$queue->status] ?? 'รอคิว' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                
+                                <div id="empty-slot-message" class="hidden text-center py-5 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-200 dark:border-blue-800 mt-3">
+                                    <i class="fa-solid fa-sparkles text-blue-500 mb-2 text-xl"></i>
+                                    <p class="text-blue-800 dark:text-blue-300 text-sm font-medium">รอบเวลานี้ยังว่างอยู่! คุณสามารถจองเป็นคิวแรกของรอบนี้ได้เลย</p>
+                                </div>
+                            @endif
+                        </div>
+                        @endif
                     </div>
-
-                    {{-- <div
-                        class="rounded-3xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 md:p-8 shadow-sm">
-                        <div class="flex items-center gap-4 mb-6">
-                            <div
-                                class="shrink-0 bg-gradient-to-br from-pink-400 to-pink-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-md text-lg">
-                                4</div>
-                            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
-                                ตั้งค่าการซักและอบ</h3>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pl-0 md:pl-14">
-                            <div class="space-y-2">
-                                <label class="block font-bold text-gray-700 dark:text-gray-300">
-                                    <i class="fa-solid fa-droplet text-blue-400 mr-2"></i>อุณหภูมิน้ำ (ซัก)
-                                </label>
-                                <select name="wash_temp"
-                                    class="w-full px-5 py-4 rounded-2xl border-2 border-gray-100 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 text-gray-800 dark:text-gray-100 focus:border-pink-500 focus:ring-4 focus:ring-pink-500/10 outline-none transition-all cursor-pointer font-medium appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23cbd5e1%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:12px_auto] bg-no-repeat bg-[position:right_1.25rem_center]">
-                                    <option value="เย็น" {{ old('wash_temp') === 'เย็น' ? 'selected' : '' }}>❄️
-                                        ซักน้ำเย็น (ถนอมผ้า)</option>
-                                    <option value="อุ่น" {{ old('wash_temp', 'อุ่น') === 'อุ่น' ? 'selected' : '' }}>🌡️
-                                        ซักน้ำอุ่น (คราบทั่วไป)</option>
-                                    <option value="ร้อน" {{ old('wash_temp') === 'ร้อน' ? 'selected' : '' }}>🔥
-                                        ซักน้ำร้อน (ฆ่าเชื้อโรค)</option>
-                                </select>
-                            </div>
-                            <div class="space-y-2">
-                                <label class="block font-bold text-gray-700 dark:text-gray-300">
-                                    <i class="fa-solid fa-wind text-orange-400 mr-2"></i>อุณหภูมิความร้อน (อบ)
-                                </label>
-                                <select name="dry_temp"
-                                    class="w-full px-5 py-4 rounded-2xl border-2 border-gray-100 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50 text-gray-800 dark:text-gray-100 focus:border-pink-500 focus:ring-4 focus:ring-pink-500/10 outline-none transition-all cursor-pointer font-medium appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23cbd5e1%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:12px_auto] bg-no-repeat bg-[position:right_1.25rem_center]">
-                                    <option value="อุ่น" {{ old('dry_temp', 'อุ่น') === 'อุ่น' ? 'selected' : '' }}>☁️
-                                        อบลมอุ่น (ถนอมผ้า)</option>
-                                    <option value="ปานกลาง" {{ old('dry_temp') === 'ปานกลาง' ? 'selected' : '' }}>☀️
-                                        อบความร้อนปานกลาง</option>
-                                    <option value="ร้อน" {{ old('dry_temp') === 'ร้อน' ? 'selected' : '' }}>🔥
-                                        อบความร้อนสูง (ผ้าหนา)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div> --}}
 
                     <div
                         class="rounded-3xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 md:p-8 shadow-sm">
@@ -489,20 +538,8 @@
                         </div>
 
                         <div class="pl-0 md:pl-14">
-                            {{-- <div
-                                class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 mb-5 rounded-r-xl shadow-sm">
-                                <div class="flex items-start gap-3">
-                                    <i class="fa-solid fa-location-dot text-blue-500 mt-1 text-lg"></i>
-                                    <p class="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
-                                        ระบบจะอ้างอิงพิกัด GPS จากที่อยู่หลักของคุณ
-                                        หากต้องการเปลี่ยนสถานที่รับ-ส่งผ้าแบบถาวร
-                                        <a href="{{ route('customer.profile') }}"
-                                            class="font-bold underline decoration-blue-400 underline-offset-2 hover:text-blue-600 transition-colors">ไปที่หน้าโปรไฟล์</a>
-                                    </p>
-                                </div>
-                            </div> --}}
-
-                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-2">ที่อยู่ปัจจุบันสำหรับรับ-ส่งผ้า</label>
+                            <label
+                                class="block font-bold text-gray-700 dark:text-gray-300 mb-2">ที่อยู่ปัจจุบันสำหรับรับ-ส่งผ้า</label>
 
                             <button type="button" onclick="getLocation()" id="btn-get-location"
                                 class="mb-3 flex items-center gap-2 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 px-4 py-2 rounded-xl transition-colors text-sm font-bold">
@@ -543,13 +580,6 @@
                                     <span id="summary-addon"
                                         class="font-medium text-gray-800 dark:text-gray-100">฿0</span>
                                 </div>
-                                {{-- <div class="flex justify-between items-center text-gray-600 dark:text-gray-300">
-                                    <span>ค่าส่งโดยประมาณ</span>
-                                    <span id="summary-delivery"
-                                        class="font-medium text-gray-800 dark:text-gray-100">฿0</span>
-                                </div>
-                                <p id="summary-distance-note" class="text-xs text-gray-400 dark:text-gray-500">แชร์ GPS
-                                    เพื่อคำนวณระยะทางจากร้าน</p> --}}
                                 <div
                                     class="pt-4 mt-2 border-t border-dashed border-gray-200 dark:border-slate-600 flex justify-between items-end">
                                     <span class="font-bold text-gray-700 dark:text-gray-200 pb-1">ยอดชำระทั้งหมด</span>
@@ -602,6 +632,47 @@
             -moz-appearance: textfield;
             appearance: textfield;
         }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 🌟 Custom Scrollbar (สวยงามทั้ง Light/Dark Mode) */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #f472b6;
+        }
+
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #f472b6;
+        }
     </style>
 
     <script>
@@ -617,6 +688,58 @@
         const totalMobileEl = document.getElementById('summary-total-mobile');
         const distanceNoteEl = document.getElementById('summary-distance-note');
         let currentDeliveryFee = 0;
+
+        // 🌟 ระบบ Filter คิวแบบ Dynamic
+        const timeSlotRadiosList = document.querySelectorAll('.time-slot-radio');
+        const queueItemsList = document.querySelectorAll('.queue-item');
+        const queueCounterBadge = document.getElementById('queue-counter-badge');
+        const emptySlotMessage = document.getElementById('empty-slot-message');
+        const totalQueuesForToday = {{ isset($todayQueues) ? $todayQueues->count() : 0 }};
+
+        function updateQueueDisplay() {
+            const checkedRadio = document.querySelector('.time-slot-radio:checked');
+
+            if (!checkedRadio) {
+                queueItemsList.forEach(item => item.style.display = 'flex');
+                if (queueCounterBadge) {
+                    queueCounterBadge.innerHTML = `แสดงทั้งหมด ${totalQueuesForToday} คิว`;
+                }
+                if (emptySlotMessage) emptySlotMessage.classList.add('hidden');
+                return;
+            }
+
+            const selectedSlotId = checkedRadio.value;
+            const slotName = checkedRadio.closest('label').querySelector('.slot-name-text').innerText;
+            let visibleCount = 0;
+
+            queueItemsList.forEach(item => {
+                if (item.dataset.slotId === selectedSlotId) {
+                    item.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            if (queueCounterBadge) {
+                queueCounterBadge.innerHTML =
+                    `<i class="fa-solid fa-filter"></i> ${slotName}: ${visibleCount} คิว (รวมทั้งวัน ${totalQueuesForToday})`;
+            }
+
+            if (emptySlotMessage) {
+                if (visibleCount === 0 && totalQueuesForToday > 0) {
+                    emptySlotMessage.classList.remove('hidden');
+                } else {
+                    emptySlotMessage.classList.add('hidden');
+                }
+            }
+        }
+
+        timeSlotRadiosList.forEach(radio => {
+            radio.addEventListener('change', updateQueueDisplay);
+        });
+
+        document.addEventListener('DOMContentLoaded', updateQueueDisplay);
 
         function parseNum(value) {
             const number = Number(value);
@@ -687,10 +810,22 @@
                 addonTotal += price * Math.max(1, qty);
             });
 
-            const grandTotal = subtotal + addonTotal + currentDeliveryFee;
+            // 🌟 เพิ่มคำนวณเงินค่า "อบผ้าเพิ่ม" 
+            let extraDryTotal = 0;
+            if (selectedPackage) {
+                const pkgId = selectedPackage.value;
+                const extraQtyInput = document.getElementById(`extra-dry-${pkgId}`);
+                if (extraQtyInput) {
+                    extraDryTotal = parseNum(extraQtyInput.value) * 10; // ครั้งละ 10 บาท
+                }
+            }
+
+            // รวมราคาทั้งหมด
+            const grandTotal = subtotal + addonTotal + extraDryTotal + currentDeliveryFee;
 
             subtotalEl.textContent = formatBaht(subtotal);
-            addonEl.textContent = formatBaht(addonTotal);
+            // แสดงราคาเมนูเสริมรวมกับค่าอบผ้าไปเลย
+            addonEl.textContent = formatBaht(addonTotal + extraDryTotal);
             if (deliveryEl) deliveryEl.textContent = formatBaht(currentDeliveryFee);
             totalEl.textContent = formatBaht(grandTotal);
             if (totalMobileEl) totalMobileEl.textContent = formatBaht(grandTotal);
@@ -793,8 +928,46 @@
             });
         });
 
+        // 🌟 ระบบกดปุ่ม +/- เพิ่มเวลาอบผ้า
+        document.querySelectorAll('.pkg-qty-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation(); // ป้องกันไม่ให้คลิกแล้วไปทับซ้อนกับการเลือกแพ็กเกจ
+
+                const pkgId = btn.dataset.pkg;
+                const input = document.getElementById(`extra-dry-${pkgId}`);
+                const radio = document.querySelector(`input[name="package_id"][value="${pkgId}"]`);
+
+                // ถ้ากดเพิ่มเวลา ให้ระบบเลือกแพ็กเกจนี้ให้อัตโนมัติ (ถ้ายังไม่ได้เลือก)
+                if (radio && !radio.checked) {
+                    radio.checked = true;
+                    // รีเซ็ตเวลาอบของแพ็กเกจอื่นๆ ให้เป็น 0 ให้หมด
+                    document.querySelectorAll('input[name^="extra_dry_qty"]').forEach(inp => {
+                        if (inp.id !== `extra-dry-${pkgId}`) inp.value = 0;
+                    });
+                }
+
+                const step = parseNum(btn.dataset.step);
+                let val = parseNum(input.value) + step;
+                if (val < 0) val = 0;
+                if (val > 10) val = 10; // จำกัดให้เพิ่มได้สูงสุด 10 ครั้ง (100 บาท)
+                input.value = val;
+
+                recalculateSummary();
+            });
+        });
+
+        // 🌟 ถ้าระหว่างนั้นลูกค้าเปลี่ยนใจไปคลิกแพ็กเกจอื่น ให้รีเซ็ตเวลาอบกลับเป็น 0
         packageOptions.forEach((option) => {
-            option.addEventListener('change', recalculateSummary);
+            option.addEventListener('change', () => {
+                const selectedId = option.value;
+                document.querySelectorAll('input[name^="extra_dry_qty"]').forEach(inp => {
+                    if (inp.id !== `extra-dry-${selectedId}`) {
+                        inp.value = 0;
+                    }
+                });
+                recalculateSummary();
+            });
         });
 
         addonChecks.forEach((check) => {
@@ -881,5 +1054,40 @@
         }
 
         refreshDeliveryQuote();
+        
+        // 🌟 ระบบ Filter การแสดงแพ็กเกจ (อัปเดตรองรับ Mobile UI)
+        const pkgFilterBtns = document.querySelectorAll('.pkg-filter-btn');
+        const packageCards = document.querySelectorAll('.package-card-wrapper');
+
+        pkgFilterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 1. เคลียร์สีปุ่มทั้งหมดให้เป็นสีเทา (Unselected)
+                pkgFilterBtns.forEach(b => {
+                    b.classList.remove('bg-pink-500', 'text-white', 'border-transparent',
+                        'shadow-sm');
+                    b.classList.add('bg-white', 'text-gray-600', 'border-gray-200');
+                });
+
+                // 2. เติมสีชมพูให้ปุ่มที่ถูกกด (Selected)
+                btn.classList.remove('bg-white', 'text-gray-600', 'border-gray-200');
+                btn.classList.add('bg-pink-500', 'text-white', 'border-transparent', 'shadow-sm');
+
+                const filterValue = btn.dataset.filter;
+
+                // 3. ซ่อน/แสดง การ์ดแพ็กเกจ
+                packageCards.forEach(card => {
+                    const name = card.dataset.name;
+                    if (filterValue === 'all') {
+                        card.style.display = 'block';
+                    } else {
+                        if (name.includes(filterValue)) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
     </script>
 @endsection

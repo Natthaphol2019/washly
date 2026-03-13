@@ -400,8 +400,9 @@
                 <div class="form-content">
                     <div class="text-center mb-6">
                         <div
-                            class="w-16 h-16 bg-gradient-to-br from-pink-100 to-rose-100 text-pink-500 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl float-icon">
-                            
+                            class="w-20 h-20 bg-gradient-to-br from-sky-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner float-icon p-2">
+                            <img src="{{ asset('logowashly.png') }}" alt="Washly Logo"
+                                class="w-full h-full object-contain">
                         </div>
                         <h2
                             class="text-3xl font-bold bg-gradient-to-r from-pink-500 to-rose-500 bg-clip-text text-transparent">

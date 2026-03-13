@@ -8,7 +8,6 @@ use App\Models\Package;
 use App\Models\TimeSlot;
 use App\Models\User;
 use App\Notifications\SystemNotification;
-use App\Services\DeliveryDistanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
@@ -77,8 +76,7 @@ class BookingController extends Controller
 
     public function showBookingForm()
     {
-        // ดึงเฉพาะแพ็กเกจที่เปิดใช้งานอยู่ และเรียงราคาจากน้อยไปมาก
-        $packages = Package::where('is_active', true)->orderBy('price', 'asc')->get();
+        $packages = Package::where('is_active', true)->orderBy('id', 'asc')->get();
         $timeSlots = TimeSlot::all();
         $catalog = $this->addonCatalog();
         $addons = array_values($catalog);
@@ -91,13 +89,16 @@ class BookingController extends Controller
             $defaultCode = $this->getDefaultDetergentCode($package, $catalog);
             $packageDefaultAddonMap[$package->id] = $defaultCode ? ($catalog[$defaultCode]['name'] ?? null) : null;
         }
-        // 🌟 1. เพิ่มโค้ดส่วนนี้ เพื่อดึงคิวของวันนี้ทั้งหมด (ยกเว้นที่ถูกยกเลิก)
+
+        // ดึงคิวของวันนี้ทั้งหมด (ยกเว้นที่ถูกยกเลิก)
         $todayQueues = Order::with(['user', 'timeSlot'])
             ->whereDate('created_at', \Carbon\Carbon::today())
             ->where('status', '!=', 'cancelled')
             ->orderBy('created_at', 'asc') // เรียงตามลำดับเวลาที่จองเข้ามา
             ->get();
-        return view('customer.book', compact('packages', 'timeSlots', 'addons', 'detergentAddons', 'softenerAddons', 'serviceAddons', 'packageDefaultAddonMap'));
+
+        // 🌟 แก้ไข: เพิ่ม 'todayQueues' เข้าไปใน compact แล้ว เพื่อไม่ให้หน้าเว็บ Error
+        return view('customer.book', compact('packages', 'timeSlots', 'addons', 'detergentAddons', 'softenerAddons', 'serviceAddons', 'packageDefaultAddonMap', 'todayQueues'));
     }
 
     public function store(Request $request)
@@ -106,8 +107,6 @@ class BookingController extends Controller
         $request->validate([
             'package_id' => 'required|exists:packages,id',
             'time_slot_id' => 'required|exists:time_slots,id',
-            'wash_temp' => 'required|in:เย็น,อุ่น,ร้อน',
-            'dry_temp' => 'required|in:อุ่น,ปานกลาง,ร้อน',
             'pickup_address' => 'required|string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
@@ -127,7 +126,7 @@ class BookingController extends Controller
         $useCustomerDetergent = $request->boolean('use_customer_detergent');
         $useCustomerSoftener = $request->boolean('use_customer_softener');
 
-        // จัดการเรื่อง Addons
+        // จัดการเรื่อง Addons (คงไว้ 100% ไม่มีการลบ)
         foreach ($request->input('addons', []) as $addonInput) {
             $code = (string) ($addonInput['code'] ?? '');
             $qty = (int) ($addonInput['qty'] ?? 0);
@@ -199,12 +198,12 @@ class BookingController extends Controller
             }
         }
 
-        // 📍 ลบระบบบวกเงินค่าส่งออกไปแล้ว รับแค่พิกัดเฉยๆ
+        // 📍 รับพิกัดอย่างเดียว ไม่บวกค่าส่ง
         $customerLat = $request->input('latitude', $user->latitude);
         $customerLng = $request->input('longitude', $user->longitude);
 
         $subtotal = (float) $package->price;
-        $grandTotal = $subtotal + $addonTotal; // ยอดรวมแบบยังไม่บวกค่าส่ง
+        $grandTotal = $subtotal + $addonTotal; // ยอดรวมเฉพาะค่าแพ็กเกจ + เมนูเสริม
         $paymentMethod = $request->input('payment_method');
         $paymentStatus = $paymentMethod === 'cash' ? 'pending_cash' : 'unpaid';
 
@@ -215,15 +214,13 @@ class BookingController extends Controller
         $order->user_id = $user->id;
         $order->package_id = $request->package_id;
         $order->time_slot_id = $request->time_slot_id;
-        $order->wash_temp = $request->wash_temp;
-        $order->dry_temp = $request->dry_temp;
         $order->pickup_address = $request->pickup_address;
 
-        // บันทึกพิกัดให้แอดมินกดดู (แต่ไม่คำนวณเงินแล้ว)
+        // บันทึกพิกัด (แต่ไม่คิดเงิน)
         $order->pickup_latitude = $customerLat;
         $order->pickup_longitude = $customerLng;
         $order->pickup_map_link = "https://maps.google.com/?q={$customerLat},{$customerLng}";
-        $order->distance = null; // ปล่อยว่างไว้
+        $order->distance = null; // ปล่อยว่างไว้เพราะยกเลิกระยะทางแล้ว
 
         $order->use_customer_detergent = $useCustomerDetergent;
         $order->use_customer_softener = $useCustomerSoftener;
@@ -253,6 +250,7 @@ class BookingController extends Controller
             'info'
         ));
 
+        // อัปเดตพิกัดลูกค้าใน Profile
         if ($customerLat && $customerLng) {
             $user->update([
                 'latitude' => $customerLat,

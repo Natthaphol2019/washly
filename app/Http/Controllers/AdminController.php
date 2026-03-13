@@ -407,10 +407,18 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
+            'image' => 'nullable|image|max:2048',
             'default_detergent_code' => 'nullable|string|exists:addon_options,code',
         ]);
+        // 🌟 อัปโหลดรูป (ถ้ามี)
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('packages', 'public');
+        }
+        $data = $request->all();
+        // 🌟 ดักค่า checkbox ให้ชัวร์ 100%
+        $data['is_active'] = $request->has('is_active') ? 1 : 0;
 
-        Package::create($request->all());
+        Package::create($data);
 
         return redirect()->route('admin.packages.index')->with('success', 'เพิ่มแพ็กเกจใหม่เรียบร้อยแล้ว! 🎉');
     }
@@ -422,11 +430,20 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
+            'image' => 'nullable|image|max:2048',
             'default_detergent_code' => 'nullable|string|exists:addon_options,code',
         ]);
-
+        // 🌟 อัปโหลดรูปใหม่ (ถ้ามี)
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('packages', 'public');
+        }
         $package = Package::findOrFail($id);
-        $package->update($request->all());
+
+        $data = $request->all();
+        // 🌟 ดักค่า checkbox ให้ชัวร์ 100%
+        $data['is_active'] = $request->has('is_active') ? 1 : 0;
+
+        $package->update($data);
 
         return redirect()->route('admin.packages.index')->with('success', 'อัปเดตข้อมูลแพ็กเกจเรียบร้อยแล้ว! ✅');
     }

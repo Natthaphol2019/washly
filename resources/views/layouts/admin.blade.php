@@ -74,11 +74,11 @@
                     <span class="font-medium">จัดการพนักงาน</span>
                 </a>
 
-                <a href="{{ route('admin.settings.index') }}"
+                {{-- <a href="{{ route('admin.settings.index') }}"
                     class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {{ request()->routeIs('admin.settings.*') ? 'washly-brand-btn text-white shadow-lg shadow-sky-400/30' : 'hover:bg-slate-800 hover:text-white' }}">
                     <i class="fa-solid fa-sliders w-5 text-center"></i>
                     <span class="font-medium">ตั้งค่าระบบจัดส่ง</span>
-                </a>
+                </a> --}}
             </nav>
 
             <div class="p-4 border-t border-slate-800 bg-slate-900/50">

@@ -383,7 +383,7 @@
                         </div>
                     </div>
 
-                    <div
+                    {{-- <div
                         class="rounded-3xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 md:p-8 shadow-sm">
                         <div class="flex items-center gap-4 mb-6">
                             <div
@@ -423,14 +423,14 @@
                                 </select>
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
 
                     <div
                         class="rounded-3xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 md:p-8 shadow-sm">
                         <div class="flex items-center gap-4 mb-6">
                             <div
                                 class="shrink-0 bg-gradient-to-br from-pink-400 to-pink-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-md text-lg">
-                                5</div>
+                                4</div>
                             <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">วิธีชำระเงิน
                             </h3>
                         </div>
@@ -483,13 +483,13 @@
                         <div class="flex items-center gap-4 mb-6">
                             <div
                                 class="shrink-0 bg-gradient-to-br from-pink-400 to-pink-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-md text-lg">
-                                6</div>
+                                5</div>
                             <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
                                 สถานที่รับ-ส่งผ้า</h3>
                         </div>
 
                         <div class="pl-0 md:pl-14">
-                            <div
+                            {{-- <div
                                 class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 mb-5 rounded-r-xl shadow-sm">
                                 <div class="flex items-start gap-3">
                                     <i class="fa-solid fa-location-dot text-blue-500 mt-1 text-lg"></i>
@@ -500,10 +500,9 @@
                                             class="font-bold underline decoration-blue-400 underline-offset-2 hover:text-blue-600 transition-colors">ไปที่หน้าโปรไฟล์</a>
                                     </p>
                                 </div>
-                            </div>
+                            </div> --}}
 
-                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-2">ที่อยู่ปัจจุบัน /
-                                จุดสังเกตเพิ่มเติมให้ไรเดอร์</label>
+                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-2">ที่อยู่ปัจจุบันสำหรับรับ-ส่งผ้า</label>
 
                             <button type="button" onclick="getLocation()" id="btn-get-location"
                                 class="mb-3 flex items-center gap-2 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 px-4 py-2 rounded-xl transition-colors text-sm font-bold">
@@ -544,12 +543,13 @@
                                     <span id="summary-addon"
                                         class="font-medium text-gray-800 dark:text-gray-100">฿0</span>
                                 </div>
-                                <div class="flex justify-between items-center text-gray-600 dark:text-gray-300">
+                                {{-- <div class="flex justify-between items-center text-gray-600 dark:text-gray-300">
                                     <span>ค่าส่งโดยประมาณ</span>
                                     <span id="summary-delivery"
                                         class="font-medium text-gray-800 dark:text-gray-100">฿0</span>
                                 </div>
-                                <p id="summary-distance-note" class="text-xs text-gray-400 dark:text-gray-500">แชร์ GPS เพื่อคำนวณระยะทางจากร้าน</p>
+                                <p id="summary-distance-note" class="text-xs text-gray-400 dark:text-gray-500">แชร์ GPS
+                                    เพื่อคำนวณระยะทางจากร้าน</p> --}}
                                 <div
                                     class="pt-4 mt-2 border-t border-dashed border-gray-200 dark:border-slate-600 flex justify-between items-end">
                                     <span class="font-bold text-gray-700 dark:text-gray-200 pb-1">ยอดชำระทั้งหมด</span>

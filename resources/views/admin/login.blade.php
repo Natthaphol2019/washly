@@ -27,7 +27,7 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Username (รหัสพนักงาน)</label>
-                <input type="text" name="username" value="{{ old('username') }}" required class="w-full px-4 py-3 rounded-lg washly-input transition-all">
+                <input type="text" name="username" value="{{ old('username') }}" required class="w-full px-4 py-3 rounded-lg washly-input transition-all" autocomplete="off">
             </div>
 
             <div>

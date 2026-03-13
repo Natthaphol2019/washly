@@ -62,27 +62,18 @@
                                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1"><i
                                             class="fa-solid fa-phone mr-1"></i> {{ $order->user->phone ?? '-' }}</p>
 
-                                    @if ($order->pickup_map_link)
+                                    @if ($order->pickup_latitude && $order->pickup_longitude)
                                         <div class="mt-2 flex flex-col items-start gap-1.5">
-                                            <a href="{{ $order->pickup_map_link }}" target="_blank"
-                                                class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors">
+                                            <a href="https://www.google.com/maps/dir/?api=1&origin={{ env('SHOP_LATITUDE') }},{{ env('SHOP_LONGITUDE') }}&destination={{ $order->pickup_latitude }},{{ $order->pickup_longitude }}&travelmode=driving"
+                                                target="_blank"
+                                                class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors">
                                                 <i class="fa-solid fa-map-location-dot"></i> นำทางไปรับผ้า
                                             </a>
 
-                                            @if($order->distance !== null || $order->straight_line_distance_km !== null)
-                                                <div class="text-[11px] font-medium px-1 space-y-1 {{ ($order->distance ?? $order->straight_line_distance_km ?? 0) <= 1.5 ? 'text-green-500' : 'text-orange-500' }}">
-                                                    @if($order->straight_line_distance_km !== null)
-                                                        <div>
-                                                            <i class="fa-solid fa-location-crosshairs"></i> ระยะเส้นตรงจากร้าน: {{ number_format($order->straight_line_distance_km, 2) }} กม.
-                                                        </div>
-                                                    @endif
-                                                    @if($order->distance !== null)
-                                                        <div>
-                                                            <i class="fa-solid fa-motorcycle"></i> ระยะทางขับรถ: {{ number_format($order->distance, 2) }} กม.
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            @endif
+                                            {{-- ปิดซ่อนเงื่อนไขค่าส่งชั่วคราว --}}
+                                            {{-- 
+        <p class="text-[10px] text-gray-500 mt-1">* 1.5 กม. แรกฟรี / ส่วนเกิน กม. ละ 5 บ.</p> 
+        --}}
                                         </div>
                                     @endif
                                 </td>

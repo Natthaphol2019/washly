@@ -77,7 +77,8 @@ class BookingController extends Controller
 
     public function showBookingForm()
     {
-        $packages = Package::all();
+        // ดึงเฉพาะแพ็กเกจที่เปิดใช้งานอยู่ และเรียงราคาจากน้อยไปมาก
+        $packages = Package::where('is_active', true)->orderBy('price', 'asc')->get();
         $timeSlots = TimeSlot::all();
         $catalog = $this->addonCatalog();
         $addons = array_values($catalog);
@@ -90,26 +91,16 @@ class BookingController extends Controller
             $defaultCode = $this->getDefaultDetergentCode($package, $catalog);
             $packageDefaultAddonMap[$package->id] = $defaultCode ? ($catalog[$defaultCode]['name'] ?? null) : null;
         }
-
+        // 🌟 1. เพิ่มโค้ดส่วนนี้ เพื่อดึงคิวของวันนี้ทั้งหมด (ยกเว้นที่ถูกยกเลิก)
+        $todayQueues = Order::with(['user', 'timeSlot'])
+            ->whereDate('created_at', \Carbon\Carbon::today())
+            ->where('status', '!=', 'cancelled')
+            ->orderBy('created_at', 'asc') // เรียงตามลำดับเวลาที่จองเข้ามา
+            ->get();
         return view('customer.book', compact('packages', 'timeSlots', 'addons', 'detergentAddons', 'softenerAddons', 'serviceAddons', 'packageDefaultAddonMap'));
     }
 
-    public function deliveryQuote(Request $request, DeliveryDistanceService $deliveryDistanceService)
-    {
-        $validated = $request->validate([
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
-        ]);
-
-        $quote = $deliveryDistanceService->calculate(
-            $validated['latitude'] ?? null,
-            $validated['longitude'] ?? null
-        );
-
-        return response()->json($quote);
-    }
-
-    public function store(Request $request, DeliveryDistanceService $deliveryDistanceService)
+    public function store(Request $request)
     {
         // 1. ตรวจสอบข้อมูล
         $request->validate([
@@ -118,8 +109,8 @@ class BookingController extends Controller
             'wash_temp' => 'required|in:เย็น,อุ่น,ร้อน',
             'dry_temp' => 'required|in:อุ่น,ปานกลาง,ร้อน',
             'pickup_address' => 'required|string',
-            'latitude' => 'nullable|numeric', // 👈 เพิ่มการรับค่าพิกัด
-            'longitude' => 'nullable|numeric', // 👈 เพิ่มการรับค่าพิกัด
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
             'payment_method' => 'required|in:transfer,cash',
             'use_customer_detergent' => 'nullable|boolean',
             'use_customer_softener' => 'nullable|boolean',
@@ -147,13 +138,10 @@ class BookingController extends Controller
 
             $addon = $catalog[$code];
 
-            if ($useCustomerDetergent && $addon['category'] === 'detergent') {
+            if ($useCustomerDetergent && $addon['category'] === 'detergent')
                 continue;
-            }
-
-            if ($useCustomerSoftener && $addon['category'] === 'softener') {
+            if ($useCustomerSoftener && $addon['category'] === 'softener')
                 continue;
-            }
 
             $lineTotal = $addon['price'] * $qty;
             $addonTotal += $lineTotal;
@@ -168,17 +156,11 @@ class BookingController extends Controller
             ];
         }
 
-        $hasDetergent = collect($selectedAddons)->contains(function ($item) {
-            return ($item['category'] ?? null) === 'detergent';
-        });
-
-        $hasSoftener = collect($selectedAddons)->contains(function ($item) {
-            return ($item['category'] ?? null) === 'softener';
-        });
+        $hasDetergent = collect($selectedAddons)->contains(fn($item) => ($item['category'] ?? null) === 'detergent');
+        $hasSoftener = collect($selectedAddons)->contains(fn($item) => ($item['category'] ?? null) === 'softener');
 
         if (!$useCustomerDetergent && !$hasDetergent) {
             $defaultCode = $this->getDefaultDetergentCode($package, $catalog);
-
             if ($defaultCode && isset($catalog[$defaultCode])) {
                 $defaultAddon = $catalog[$defaultCode];
                 $lineTotal = (float) $defaultAddon['price'];
@@ -194,15 +176,12 @@ class BookingController extends Controller
                     'auto_selected' => true,
                 ];
             } else {
-                return back()->withErrors([
-                    'addons' => 'ยังไม่มีเมนูน้ำยาซักในระบบ กรุณาแจ้งแอดมินเพื่อเพิ่มข้อมูลก่อนรับจอง',
-                ])->withInput();
+                return back()->withErrors(['addons' => 'ยังไม่มีเมนูน้ำยาซักในระบบ กรุณาแจ้งแอดมิน'])->withInput();
             }
         }
 
         if (!$useCustomerSoftener && !$hasSoftener) {
             $defaultSoftenerCode = $this->getDefaultAddonCodeByCategory($catalog, 'softener');
-
             if ($defaultSoftenerCode && isset($catalog[$defaultSoftenerCode])) {
                 $defaultSoftener = $catalog[$defaultSoftenerCode];
                 $lineTotal = (float) $defaultSoftener['price'];
@@ -220,46 +199,17 @@ class BookingController extends Controller
             }
         }
 
-        // 🚀 คำนวณค่าจัดส่ง
-        // ตรวจสอบว่าพิกัดถูกส่งมาจากหน้าเว็บตอนกด "ดึงตำแหน่ง" ไหม ถ้าไม่มีให้ไปเอาจากโปรไฟล์
-        $customerLat = $deliveryDistanceService->normalizeCoordinate(
-            $request->filled('latitude') ? $request->input('latitude') : $user->latitude,
-            -90,
-            90
-        );
-        $customerLng = $deliveryDistanceService->normalizeCoordinate(
-            $request->filled('longitude') ? $request->input('longitude') : $user->longitude,
-            -180,
-            180
-        );
-
-        $deliveryInfo = $deliveryDistanceService->calculate($customerLat, $customerLng);
-        $deliveryFee = $deliveryInfo['fee'];
-
-        // 📝 ถ้าอยากจะเก็บรายการค่าจัดส่งลงไปในตาราง Addon ด้วย เพื่อให้โชว์ในบิลรวม
-        if ($deliveryFee > 0) {
-            $selectedAddons[] = [
-                'code' => 'delivery_fee',
-                'name' => 'ค่าเดินทางเพิ่มเติม (ระยะทาง ' . $deliveryInfo['driving_distance_km'] . ' กม.)',
-                'category' => 'service',
-                'unit_price' => $deliveryFee,
-                'qty' => 1,
-                'line_total' => $deliveryFee,
-                'auto_selected' => true,
-            ];
-            $addonTotal += $deliveryFee;
-        }
-
+        // 📍 ลบระบบบวกเงินค่าส่งออกไปแล้ว รับแค่พิกัดเฉยๆ
+        $customerLat = $request->input('latitude', $user->latitude);
+        $customerLng = $request->input('longitude', $user->longitude);
 
         $subtotal = (float) $package->price;
-        $grandTotal = $subtotal + $addonTotal;
+        $grandTotal = $subtotal + $addonTotal; // ยอดรวมแบบยังไม่บวกค่าส่ง
         $paymentMethod = $request->input('payment_method');
         $paymentStatus = $paymentMethod === 'cash' ? 'pending_cash' : 'unpaid';
 
-        // 2. สร้างเลขที่ออเดอร์
+        // สร้างออเดอร์
         $orderNumber = 'ORD-' . date('Ymd') . '-' . rand(1000, 9999);
-
-        // 3. เริ่มสร้างออเดอร์ใหม่
         $order = new Order();
         $order->order_number = $orderNumber;
         $order->user_id = $user->id;
@@ -267,19 +217,16 @@ class BookingController extends Controller
         $order->time_slot_id = $request->time_slot_id;
         $order->wash_temp = $request->wash_temp;
         $order->dry_temp = $request->dry_temp;
-
         $order->pickup_address = $request->pickup_address;
 
-        // 📍 เก็บพิกัดและระยะทางลง Order
+        // บันทึกพิกัดให้แอดมินกดดู (แต่ไม่คำนวณเงินแล้ว)
         $order->pickup_latitude = $customerLat;
         $order->pickup_longitude = $customerLng;
-        $order->pickup_map_link = $deliveryDistanceService->makeMapLink($customerLat, $customerLng);
-        
-        $order->distance = $deliveryInfo['driving_distance_km'];
+        $order->pickup_map_link = "https://maps.google.com/?q={$customerLat},{$customerLng}";
+        $order->distance = null; // ปล่อยว่างไว้
 
         $order->use_customer_detergent = $useCustomerDetergent;
         $order->use_customer_softener = $useCustomerSoftener;
-
         $order->subtotal = $subtotal;
         $order->addon_total = $addonTotal;
         $order->selected_addons = $selectedAddons;
@@ -287,7 +234,6 @@ class BookingController extends Controller
         $order->status = 'pending';
         $order->payment_method = $paymentMethod;
         $order->payment_status = $paymentStatus;
-
         $order->save();
 
         $paymentMethodLabel = $paymentMethod === 'cash' ? 'เงินสดปลายทาง' : 'โอน/สแกน QR';
@@ -307,15 +253,13 @@ class BookingController extends Controller
             'info'
         ));
 
-        // อัปเดตพิกัดกลับไปที่ข้อมูล User ด้วย (เผื่อครั้งหน้าจะได้ไม่ต้องดึงใหม่)
         if ($customerLat && $customerLng) {
             $user->update([
                 'latitude' => $customerLat,
                 'longitude' => $customerLng,
-                'map_link' => $deliveryDistanceService->makeMapLink($customerLat, $customerLng)
+                'map_link' => "https://maps.google.com/?q={$customerLat},{$customerLng}"
             ]);
         }
-
 
         return redirect()->route('customer.main')->with('success_order', 'จองคิวสำเร็จ! หมายเลขออเดอร์ของคุณคือ ' . $orderNumber);
     }

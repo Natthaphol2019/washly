@@ -435,6 +435,16 @@ class AdminController extends Controller
     public function destroyPackage($id)
     {
         $package = Package::findOrFail($id);
+
+        // 🌟 เพิ่มโค้ดส่วนนี้: เช็คว่าแพ็กเกจนี้เคยถูกใช้งานในตาราง orders หรือยัง?
+        $hasOrders = Order::where('package_id', $package->id)->exists();
+
+        if ($hasOrders) {
+            // ถ้าเคยมีคนสั่งแล้ว ไม่ให้ลบ และเด้งกลับไปพร้อมข้อความ Error สีแดง
+            return redirect()->route('admin.packages.index')->with('error', 'ไม่สามารถลบได้! เนื่องจากมีประวัติออเดอร์ที่ใช้แพ็กเกจนี้อยู่ (แนะนำให้แก้ไขชื่อ/ราคาแทน หรือแจ้งนักพัฒนาให้ทำระบบซ่อนแพ็กเกจ)');
+        }
+
+        // ถ้ายังไม่มีคนเคยสั่ง ถึงจะยอมให้ลบทิ้งได้
         $package->delete();
 
         return redirect()->route('admin.packages.index')->with('success', 'ลบแพ็กเกจออกจากระบบแล้ว 🗑️');
@@ -584,7 +594,7 @@ class AdminController extends Controller
         $customer->username = $request->username;
         $customer->phone = $request->phone;
         $customer->address = $request->address;
-        
+
         // อัปเดตรหัสผ่านเฉพาะตอนที่พิมพ์เข้ามาใหม่
         if ($request->filled('password')) {
             $customer->password = Hash::make($request->password);
@@ -665,7 +675,7 @@ class AdminController extends Controller
     public function destroyStaff($id)
     {
         $staff = User::findOrFail($id);
-        
+
         // 🚨 ป้องกันไม่ให้แอดมินกดลบบัญชีตัวเองตอนที่กำลังใช้งานอยู่
         if (Auth::id() == $staff->id) {
             return redirect()->route('admin.staff.index')->with('error', 'ไม่สามารถลบบัญชีของตัวเองได้! ❌');

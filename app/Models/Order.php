@@ -81,7 +81,10 @@ class Order extends Model
     {
         return $this->hasMany(OrderLog::class);
     }
-
+    public function driver()
+    {
+        return $this->belongsTo(User::class, 'driver_id');
+    }
     private function calculateHaversineDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
     {
         $earthRadius = 6371;

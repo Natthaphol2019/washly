@@ -45,42 +45,96 @@
                     <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                         <tr>
                             <th class="p-4 font-semibold w-px whitespace-nowrap text-center">ลำดับ</th>
-                            <th class="p-4 font-semibold">ชื่อ-นามสกุล</th>
-                            <th class="p-4 font-semibold">Username</th>
-                            <th class="p-4 font-semibold">เบอร์โทรศัพท์</th>
+                            <th class="p-4 font-semibold w-[25%] min-w-[200px]">ชื่อ-นามสกุล / ระยะทาง</th>
+                            <th class="p-4 font-semibold">บัญชี / ติดต่อ</th>
+                            <th class="p-4 font-semibold w-[30%] min-w-[220px]">ที่อยู่ / พิกัดลูกค้า</th>
                             <th class="p-4 font-semibold whitespace-nowrap">วันที่สมัคร</th>
                             <th class="p-4 font-semibold text-center whitespace-nowrap w-px">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 washly-shell">
                         @forelse($customers as $index => $customer)
-                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                            {{-- 🌟 ไฮไลท์พื้นหลังเป็นสีแดงอ่อน ถ้าระยะทางยังว่าง --}}
+                            <tr class="transition-colors {{ $customer->delivery_distance === null ? 'bg-rose-50/40 dark:bg-rose-900/10 hover:bg-rose-100/50 dark:hover:bg-rose-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50' }}">
                                 <td class="p-4 text-center text-gray-500 font-medium">{{ $index + 1 }}</td>
+                                
+                                {{-- 1. ชื่อ และ ระยะทาง --}}
                                 <td class="p-4">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold">
+                                        <div class="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold shrink-0">
                                             {{ mb_substr($customer->fullname, 0, 1) }}
                                         </div>
-                                        <span class="font-bold text-gray-800 dark:text-gray-100">{{ $customer->fullname }}</span>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-gray-800 dark:text-gray-100">{{ $customer->fullname }}</span>
+                                            
+                                            {{-- 🌟 โชว์ระยะทาง หรือ ไฮไลท์เตือนแอดมิน --}}
+                                            @if($customer->delivery_distance !== null)
+                                                <span class="text-[10px] text-sky-500 font-medium mt-0.5"><i class="fa-solid fa-route"></i> ระยะทาง {{ $customer->delivery_distance }} กม.</span>
+                                            @else
+                                                <span class="text-[10px] text-rose-500 font-bold mt-0.5 flex items-center gap-1.5">
+                                                    <span class="relative flex h-2 w-2">
+                                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                                                    </span>
+                                                    ต้องประเมินระยะทาง!
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
                                 </td>
-                                <td class="p-4 text-gray-500">{{ $customer->username }}</td>
-                                <td class="p-4 text-gray-500">{{ $customer->phone ?? '-' }}</td>
+
+                                {{-- 2. บัญชี และ เบอร์โทร --}}
+                                <td class="p-4">
+                                    <p class="text-gray-800 dark:text-gray-200 font-medium"><i class="fa-solid fa-at text-gray-400 mr-1"></i>{{ $customer->username }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1"><i class="fa-solid fa-phone text-gray-400 mr-1"></i>{{ $customer->phone ?? '-' }}</p>
+                                </td>
+
+                                {{-- 🌟 3. ที่อยู่ และ ปุ่มเปิดแผนที่ --}}
+                                <td class="p-4 whitespace-normal">
+                                    @if($customer->address)
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed" title="{{ $customer->address }}">{{ Str::limit($customer->address, 60) }}</p>
+                                        
+                                        @php
+                                            // สร้าง Link ไป Google Maps (ถ้ามีละติจูด ให้ใช้พิกัด ถ้าไม่มีให้ใช้ที่อยู่ค้นหา)
+                                            $mapQuery = ($customer->latitude && $customer->longitude) 
+                                                ? "{$customer->latitude},{$customer->longitude}" 
+                                                : urlencode(preg_replace('/\s+/', ' ', $customer->address));
+                                        @endphp
+                                        <a href="https://www.google.com/maps/search/?api=1&query={{ $mapQuery }}" target="_blank" class="inline-flex items-center gap-1.5 mt-2 text-[10px] font-bold text-blue-600 hover:text-white dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-500 dark:hover:bg-blue-500 px-2.5 py-1 rounded-md border border-blue-200 dark:border-blue-800/50 transition-all">
+                                            <i class="fa-solid fa-map-location-dot"></i> ดูเส้นทางแผนที่
+                                        </a>
+                                    @else
+                                        <span class="text-xs text-gray-400 italic">ยังไม่ระบุที่อยู่</span>
+                                    @endif
+                                </td>
+
                                 <td class="p-4 text-gray-500">{{ $customer->created_at ? $customer->created_at->format('d/m/Y H:i') : '-' }}</td>
+                                
+                                {{-- 4. จัดการ --}}
                                 <td class="p-4 text-center whitespace-nowrap w-px">
                                     <div class="flex items-center gap-2 justify-center">
-                                        <button type="button" onclick="openViewModal('{{ addslashes($customer->fullname) }}', '{{ addslashes($customer->username) }}', '{{ addslashes($customer->phone ?? '-') }}', '{{ addslashes(preg_replace('/\r|\n/', ' ', $customer->address ?? '-')) }}', '{{ $customer->created_at ? $customer->created_at->format('d/m/Y H:i') : '-' }}')" class="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-900/30 text-sky-600 hover:bg-sky-100 transition flex items-center justify-center border border-sky-200 dark:border-sky-800/50">
+                                        
+                                        <button type="button" onclick="openViewModal('{{ addslashes($customer->fullname) }}', '{{ addslashes($customer->username) }}', '{{ addslashes($customer->phone ?? '-') }}', '{{ addslashes(preg_replace('/\r|\n/', ' ', $customer->address ?? '-')) }}', '{{ $customer->created_at ? $customer->created_at->format('d/m/Y H:i') : '-' }}', '{{ $customer->delivery_distance ?? '-' }}')" class="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-900/30 text-sky-600 hover:bg-sky-100 transition flex items-center justify-center border border-sky-200 dark:border-sky-800/50">
                                             <i class="fa-solid fa-eye text-xs"></i>
                                         </button>
-                                        <button type="button" onclick="openEditModal({{ $customer->id }}, '{{ addslashes($customer->fullname) }}', '{{ addslashes($customer->username) }}', '{{ addslashes($customer->phone ?? '') }}', '{{ addslashes(preg_replace('/\r|\n/', ' ', $customer->address ?? '')) }}')" class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-500 hover:bg-amber-100 transition flex items-center justify-center border border-amber-200 dark:border-amber-800/50">
+                                        
+                                        {{-- 🌟 ปุ่ม Edit จะกลายเป็นสีแดงกะพริบ ถ้ายังไม่ได้กรอกระยะทาง --}}
+                                        @php
+                                            $editBtnClass = $customer->delivery_distance === null 
+                                                ? 'bg-rose-100 text-rose-600 border-rose-300 hover:bg-rose-200 shadow-[0_0_8px_rgba(244,63,94,0.4)] animate-pulse' 
+                                                : 'bg-amber-50 dark:bg-amber-900/30 text-amber-500 hover:bg-amber-100 border-amber-200 dark:border-amber-800/50';
+                                        @endphp
+                                        <button type="button" onclick="openEditModal({{ $customer->id }}, '{{ addslashes($customer->fullname) }}', '{{ addslashes($customer->username) }}', '{{ addslashes($customer->phone ?? '') }}', '{{ addslashes(preg_replace('/\r|\n/', ' ', $customer->address ?? '')) }}', '{{ $customer->delivery_distance ?? '' }}')" class="w-8 h-8 rounded-lg transition flex items-center justify-center border {{ $editBtnClass }}">
                                             <i class="fa-solid fa-pen text-xs"></i>
                                         </button>
+
                                         <form action="{{ route('admin.customers.destroy', $customer->id) }}" method="POST" class="m-0">
                                             @csrf @method('DELETE')
-                                            <button type="button" onclick="confirmDelete(this.closest('form'), '{{ addslashes($customer->fullname) }}')" class="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-500 hover:bg-rose-100 transition flex items-center justify-center border border-rose-200 dark:border-rose-800/50">
+                                            <button type="button" onclick="confirmDelete(this.closest('form'), '{{ addslashes($customer->fullname) }}')" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-rose-50 hover:text-rose-500 transition flex items-center justify-center border border-gray-200 dark:border-gray-700">
                                                 <i class="fa-solid fa-trash text-xs"></i>
                                             </button>
                                         </form>
+
                                     </div>
                                 </td>
                             </tr>
@@ -164,14 +218,20 @@
                     </div>
                 </div>
 
-                <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/50">
-                    <p class="text-xs font-semibold text-slate-500">ที่อยู่</p>
-                    <p id="view_address" class="mt-1 text-sm leading-relaxed text-slate-700 dark:text-slate-300">-</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/50">
+                        <p class="text-xs font-semibold text-slate-500">วันที่สมัคร</p>
+                        <p id="view_created_at" class="mt-1 text-sm font-bold text-slate-800 dark:text-white">-</p>
+                    </div>
+                    <div class="rounded-xl border border-sky-200 dark:border-sky-800/50 p-4 bg-sky-50/50 dark:bg-sky-900/20">
+                        <p class="text-xs font-semibold text-sky-600 dark:text-sky-400">ระยะทางจากร้าน (กม.)</p>
+                        <p id="view_delivery_distance" class="mt-1 text-sm font-bold text-sky-700 dark:text-sky-300">-</p>
+                    </div>
                 </div>
 
                 <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900/50">
-                    <p class="text-xs font-semibold text-slate-500">วันที่สมัคร</p>
-                    <p id="view_created_at" class="mt-1 text-sm font-bold text-slate-800 dark:text-white">-</p>
+                    <p class="text-xs font-semibold text-slate-500">ที่อยู่</p>
+                    <p id="view_address" class="mt-1 text-sm leading-relaxed text-slate-700 dark:text-slate-300">-</p>
                 </div>
             </div>
 
@@ -209,13 +269,22 @@
                         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">ที่อยู่</label>
                         <textarea id="edit_address" name="address" rows="3" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 resize-none"></textarea>
                     </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            ระยะทางรับ-ส่งจากร้าน (กิโลเมตร) 
+                            <span class="text-xs text-slate-400 dark:text-slate-500 font-normal ml-1">(< 1.5 กม. ฟรี, จากนั้น กม.ละ 20 บาท)</span>
+                        </label>
+                        <input type="number" step="0.1" min="0" id="edit_delivery_distance" name="delivery_distance" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500" placeholder="เช่น 2.5">
+                    </div>
+
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">เปลี่ยนรหัสผ่าน <span class="text-xs text-slate-400 font-normal">(เว้นว่างไว้หากไม่ต้องการเปลี่ยน)</span></label>
                         <input type="password" name="password" minlength="8" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500">
                     </div>
                 </div>
                 <div class="mt-8 flex justify-end gap-3">
-                    <button type="button" onclick="closeModal('editCustomerModal')" class="px-5 py-2.5 rounded-xl font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">ยกเลิก</button>
+                    <button type="button" onclick="closeModal('editCustomerModal')" class="px-5 py-2.5 rounded-xl font-medium bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">ยกเลิก</button>
                     <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-md transition-colors">อัปเดตข้อมูล</button>
                 </div>
             </form>
@@ -227,21 +296,26 @@
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-        function openViewModal(fullname, username, phone, address, createdAt) {
+        function openViewModal(fullname, username, phone, address, createdAt, distance) {
             document.getElementById('view_fullname').textContent = fullname || '-';
             document.getElementById('view_username').textContent = username || '-';
             document.getElementById('view_phone').textContent = phone || '-';
             document.getElementById('view_address').textContent = address || '-';
             document.getElementById('view_created_at').textContent = createdAt || '-';
+            
+            let distanceText = distance !== '-' && distance !== '' ? distance + ' กม.' : 'ยังไม่ประเมิน';
+            document.getElementById('view_delivery_distance').textContent = distanceText;
+            
             openModal('viewCustomerModal');
         }
 
-        function openEditModal(id, fullname, username, phone, address) {
+        function openEditModal(id, fullname, username, phone, address, distance) {
             document.getElementById('editForm').action = `/admin/customers/${id}`;
             document.getElementById('edit_fullname').value = fullname;
             document.getElementById('edit_username').value = username;
             document.getElementById('edit_phone').value = phone;
             document.getElementById('edit_address').value = address;
+            document.getElementById('edit_delivery_distance').value = distance !== '-' ? distance : '';
             openModal('editCustomerModal');
         }
 

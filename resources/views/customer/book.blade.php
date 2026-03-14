@@ -101,7 +101,7 @@
                     </div>
 
                     {{-- 2. เลือกน้ำยาและบริการเสริม --}}
-                    <div class="rounded-3xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 md:p-8 shadow-sm">
+                    <!-- <div class="rounded-3xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 md:p-8 shadow-sm">
                         <div class="flex items-center gap-4 mb-6">
                             <div class="shrink-0 bg-gradient-to-br from-pink-400 to-pink-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-md text-lg">2</div>
                             <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">เลือกน้ำยาและบริการเสริม</h3>
@@ -272,7 +272,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
 
                     {{-- 🌟 3. วันที่และรอบเวลา (ดีไซน์ใหม่) --}}
                     <div class="rounded-3xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 md:p-8 shadow-sm">
@@ -459,7 +459,19 @@
 
                         <div class="pl-0 md:pl-14 space-y-5">
                             <div>
-                                <label class="block font-bold text-gray-700 dark:text-gray-300 mb-2">ที่อยู่ปัจจุบันสำหรับรับ-ส่งผ้า <span class="text-rose-500">*</span></label>
+                                {{-- 🌟 เพิ่มกล่องแสดงระยะทางจากแอดมิน --}}
+                                <div class="flex flex-wrap justify-between items-end gap-2 mb-2">
+                                    <label class="block font-bold text-gray-700 dark:text-gray-300">ที่อยู่ปัจจุบันสำหรับรับ-ส่งผ้า <span class="text-rose-500">*</span></label>
+                                    @if(Auth::user()->delivery_distance !== null)
+                                        <span class="text-[11px] bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 px-2.5 py-1 rounded-lg border border-sky-200 dark:border-sky-800 font-bold">
+                                            <i class="fa-solid fa-route"></i> ระยะทางร้านประเมิน: {{ Auth::user()->delivery_distance }} กม.
+                                        </span>
+                                    @else
+                                        <span class="text-[10px] bg-amber-50 text-amber-600 px-2 py-1 rounded-lg border border-amber-200 font-bold">
+                                            รอแอดมินประเมินค่าส่ง
+                                        </span>
+                                    @endif
+                                </div>
                                 
                                 <button type="button" onclick="getLocation()" id="btn-get-location" class="mb-3 flex items-center gap-2 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 px-4 py-2 rounded-xl transition-colors text-sm font-bold">
                                     <i class="fa-solid fa-location-crosshairs"></i> ดึงตำแหน่งปัจจุบันของฉัน (GPS)
@@ -561,70 +573,104 @@
         function formatBaht(value) { return `฿${parseNum(value).toLocaleString('th-TH')}`; }
 
         function recalculateSummary() {
-            let grandTotal = 0;
-            let listHTML = '';
+    let grandTotal = 0;
+    let listHTML = '';
 
-            const selectedPackage = packageOptions.find((option) => option.checked);
-            if (selectedPackage) {
-                const subtotal = parseNum(selectedPackage.dataset.packagePrice);
-                const packageName = selectedPackage.closest('.package-card-wrapper').dataset.name;
-                grandTotal += subtotal;
-                
-                listHTML += `
-                    <div class="flex justify-between items-start text-sm text-gray-800 dark:text-gray-100 font-bold mb-2 pb-2 border-b border-gray-100 dark:border-slate-700">
-                        <span class="pr-4 flex items-start gap-2"><i class="fa-solid fa-box text-pink-500 mt-1"></i> ${packageName}</span>
-                        <span class="whitespace-nowrap text-pink-600 dark:text-pink-400">฿${subtotal.toLocaleString()}</span>
-                    </div>
-                `;
+    const selectedPackage = packageOptions.find((option) => option.checked);
+    if (selectedPackage) {
+        const subtotal = parseNum(selectedPackage.dataset.packagePrice);
+        const packageName = selectedPackage.closest('.package-card-wrapper').dataset.name;
+        grandTotal += subtotal;
+        
+        listHTML += `
+            <div class="flex justify-between items-start text-sm text-gray-800 dark:text-gray-100 font-bold mb-2 pb-2 border-b border-gray-100 dark:border-slate-700">
+                <span class="pr-4 flex items-start gap-2"><i class="fa-solid fa-box text-pink-500 mt-1"></i> ${packageName}</span>
+                <span class="whitespace-nowrap text-pink-600 dark:text-pink-400">฿${subtotal.toLocaleString()}</span>
+            </div>
+        `;
 
-                const defaultAddonHint = document.getElementById('default-addon-hint');
-                if (defaultAddonHint) {
-                    defaultAddonHint.textContent = selectedPackage.dataset.defaultAddonName || 'ใช้สูตรเริ่มต้นของระบบ';
-                }
-
-                const pkgId = selectedPackage.value;
-                const extraQtyInput = document.getElementById(`extra-dry-${pkgId}`);
-                if (extraQtyInput) {
-                    const extraQty = parseNum(extraQtyInput.value);
-                    if (extraQty > 0) {
-                        const extraDryTotal = extraQty * 10;
-                        grandTotal += extraDryTotal;
-                        listHTML += `
-                            <div class="flex justify-between items-start text-sm text-amber-600 dark:text-amber-400 mb-2 pl-6">
-                                <span class="pr-4">+ อบผ้าเพิ่ม (${extraQty * 10} นาที)</span>
-                                <span class="font-medium whitespace-nowrap">฿${extraDryTotal.toLocaleString()}</span>
-                            </div>
-                        `;
-                    }
-                }
-            } else {
-                const defaultAddonHint = document.getElementById('default-addon-hint');
-                if (defaultAddonHint) defaultAddonHint.textContent = 'ยังไม่ได้เลือกแพ็กเกจ';
-                listHTML += `<div class="text-sm text-gray-400 dark:text-gray-500 italic text-center py-4">กรุณาเลือกแพ็กเกจเพื่อดูสรุปรายการ</div>`;
-            }
-
-            addonChecks.forEach((check) => {
-                if (!check.checked || check.disabled) return;
-                const card = check.closest('.addon-card');
-                const qtyInput = card?.querySelector('.addon-qty');
-                const price = parseNum(card?.dataset.addonPrice);
-                const qty = parseNum(qtyInput?.value || 1);
-                const addonName = card.querySelector('.addon-name-txt').innerText;
-                const lineTotal = price * Math.max(1, qty);
-                grandTotal += lineTotal;
-
-                listHTML += `
-                    <div class="flex justify-between items-start text-sm text-gray-600 dark:text-gray-300 mb-2 pl-6">
-                        <span class="pr-4">- ${addonName} <span class="text-[10px] bg-gray-100 dark:bg-slate-700 px-1.5 py-0.5 rounded ml-1">x${qty}</span></span>
-                        <span class="font-medium whitespace-nowrap">฿${lineTotal.toLocaleString()}</span>
-                    </div>
-                `;
-            });
-
-            summaryItemsList.innerHTML = listHTML;
-            totalEl.textContent = formatBaht(grandTotal);
-            if (totalMobileEl) totalMobileEl.textContent = formatBaht(grandTotal);
+        const defaultAddonHint = document.getElementById('default-addon-hint');
+        if (defaultAddonHint) {
+            defaultAddonHint.textContent = selectedPackage.dataset.defaultAddonName || 'ใช้สูตรเริ่มต้นของระบบ';
         }
+
+        const pkgId = selectedPackage.value;
+        const extraQtyInput = document.getElementById(`extra-dry-${pkgId}`);
+        if (extraQtyInput) {
+            const extraQty = parseNum(extraQtyInput.value);
+            if (extraQty > 0) {
+                const extraDryTotal = extraQty * 10;
+                grandTotal += extraDryTotal;
+                listHTML += `
+                    <div class="flex justify-between items-start text-sm text-amber-600 dark:text-amber-400 mb-2 pl-6">
+                        <span class="pr-4">+ อบผ้าเพิ่ม (${extraQty * 10} นาที)</span>
+                        <span class="font-medium whitespace-nowrap">฿${extraDryTotal.toLocaleString()}</span>
+                    </div>
+                `;
+            }
+        }
+    } else {
+        const defaultAddonHint = document.getElementById('default-addon-hint');
+        if (defaultAddonHint) defaultAddonHint.textContent = 'ยังไม่ได้เลือกแพ็กเกจ';
+        listHTML += `<div class="text-sm text-gray-400 dark:text-gray-500 italic text-center py-4">กรุณาเลือกแพ็กเกจเพื่อดูสรุปรายการ</div>`;
+    }
+
+    addonChecks.forEach((check) => {
+        if (!check.checked || check.disabled) return;
+        const card = check.closest('.addon-card');
+        const qtyInput = card?.querySelector('.addon-qty');
+        const price = parseNum(card?.dataset.addonPrice);
+        const qty = parseNum(qtyInput?.value || 1);
+        const addonName = card.querySelector('.addon-name-txt').innerText;
+        const lineTotal = price * Math.max(1, qty);
+        grandTotal += lineTotal;
+
+        listHTML += `
+            <div class="flex justify-between items-start text-sm text-gray-600 dark:text-gray-300 mb-2 pl-6">
+                <span class="pr-4">- ${addonName} <span class="text-[10px] bg-gray-100 dark:bg-slate-700 px-1.5 py-0.5 rounded ml-1">x${qty}</span></span>
+                <span class="font-medium whitespace-nowrap">฿${lineTotal.toLocaleString()}</span>
+            </div>
+        `;
+    });
+
+    // 🌟 สูตรคำนวณค่าส่งแบบขั้นบันได (Step Logic) ตามโจทย์
+    const deliveryDistance = {{ Auth::user()->delivery_distance ?? 'null' }};
+    let deliveryFee = 0;
+    let deliveryText = "รอแอดมินประเมิน";
+    let deliveryNote = "";
+
+    if (deliveryDistance !== null) {
+        if (deliveryDistance <= 1.5) {
+            // ✅ ระยะทาง 0 - 1.5 กม. = ฟรี
+            deliveryFee = 0;
+            deliveryText = "ฟรี (ไม่เกิน 1.5 กม.)";
+        } else {
+            // ✅ ส่วนที่เกินจาก 1.5 กม. 
+            // ตัวอย่าง: 2.4 กม. -> เกินมา 0.9 กม. -> Math.ceil(0.9) = 1 -> 1 * 20 = 20 บาท
+            // ตัวอย่าง: 2.6 กม. -> เกินมา 1.1 กม. -> Math.ceil(1.1) = 2 -> 2 * 20 = 40 บาท
+            let extraDistance = deliveryDistance - 1.5;
+            deliveryFee = Math.ceil(extraDistance) * 20;
+            deliveryText = `฿${deliveryFee.toLocaleString()} (${deliveryDistance} กม.)`;
+        }
+    } else {
+        deliveryNote = `<p class="text-[10px] text-amber-500 text-right mt-1">* รอแอดมินแจ้งยอดค่าส่งภายหลัง</p>`;
+    }
+
+    // รวมค่าส่งเข้ายอดสุทธิ
+    grandTotal += deliveryFee;
+
+    listHTML += `
+        <div class="flex justify-between items-start text-sm font-bold text-sky-600 dark:text-sky-400 mt-3 pt-3 border-t border-dashed border-gray-200 dark:border-slate-700">
+            <span class="pr-4 flex items-center gap-2"><i class="fa-solid fa-motorcycle"></i> ค่ารับ-ส่งผ้า</span>
+            <span class="whitespace-nowrap">${deliveryText}</span>
+        </div>
+        ${deliveryNote}
+    `;
+
+    summaryItemsList.innerHTML = listHTML;
+    totalEl.textContent = formatBaht(grandTotal);
+    if (totalMobileEl) totalMobileEl.textContent = formatBaht(grandTotal);
+}
 
         function toggleAddonInput(checkEl) {
             const card = checkEl.closest('.addon-card');

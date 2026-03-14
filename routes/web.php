@@ -54,7 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // ------------------------------------------
-    // 👑 โซนแอดมิน (Admin)
+    // 👑 โซนแอดมิน (Admin & Staff)
     // ------------------------------------------
     Route::prefix('admin')->middleware('role.admin_or_staff')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
@@ -64,12 +64,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/delivery/backfill', [AdminController::class, 'backfillOrderDistances'])->name('admin.settings.delivery.backfill');
         Route::get('/main', function () { return redirect()->route('admin.dashboard'); })->name('admin.main');
 
+        // จัดการออเดอร์
         Route::get('/orders', [AdminController::class, 'manageOrders'])->name('admin.orders.index');
         Route::put('/orders/{id}/status', [AdminController::class, 'updateStatus'])->name('admin.orders.status');
         Route::post('/orders/{id}/approve-payment', [AdminController::class, 'approvePayment'])->name('admin.orders.approve_payment');
         Route::post('/orders/{id}/confirm-cash', [AdminController::class, 'confirmCashPayment'])->name('admin.orders.confirm_cash');
         Route::post('/orders/{id}/reject-slip', [AdminController::class, 'rejectSlip'])->name('admin.orders.reject_slip');
+        Route::post('/orders/{id}/cancel', [AdminController::class, 'cancelOrder'])->name('admin.orders.cancel');
+        Route::post('/orders/{id}/assign-driver', [AdminController::class, 'assignDriver'])->name('admin.orders.assign_driver');
 
+        // แพ็กเกจ & Addon
         Route::get('/packages', [AdminController::class, 'packages'])->name('admin.packages.index');
         Route::post('/packages', [AdminController::class, 'storePackage'])->name('admin.packages.store');
         Route::put('/packages/{id}', [AdminController::class, 'updatePackage'])->name('admin.packages.update');
@@ -78,6 +82,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/addons/{id}', [AdminController::class, 'updateAddon'])->name('admin.addons.update');
         Route::delete('/addons/{id}', [AdminController::class, 'destroyAddon'])->name('admin.addons.destroy');
         
+        // จัดการผู้ใช้งาน
         Route::get('/customers', [AdminController::class, 'customers'])->name('admin.customers.index');
         Route::post('/customers', [AdminController::class, 'storeCustomer'])->name('admin.customers.store');
         Route::put('/customers/{id}', [AdminController::class, 'updateCustomer'])->name('admin.customers.update');
@@ -88,12 +93,10 @@ Route::middleware('auth')->group(function () {
         Route::put('/staff/{id}', [AdminController::class, 'updateStaff'])->name('admin.staff.update');
         Route::delete('/staff/{id}', [AdminController::class, 'destroyStaff'])->name('admin.staff.destroy');
 
-        // 👇 โซนของคนขับที่ Error (จัดให้เป๊ะแล้ว)
         Route::get('/drivers', [AdminController::class, 'drivers'])->name('admin.drivers.index');
         Route::post('/drivers', [AdminController::class, 'storeDriver'])->name('admin.drivers.store');
         Route::put('/drivers/{id}', [AdminController::class, 'updateDriver'])->name('admin.drivers.update');
         Route::delete('/drivers/{id}', [AdminController::class, 'destroyDriver'])->name('admin.drivers.destroy');
-        Route::post('/orders/{id}/assign-driver', [AdminController::class, 'assignDriver'])->name('admin.orders.assign_driver');
     });
 
     // ------------------------------------------
@@ -101,8 +104,12 @@ Route::middleware('auth')->group(function () {
     // ------------------------------------------
     Route::prefix('driver')->middleware('role.driver')->group(function () {
         Route::get('/dashboard', [DriverController::class, 'index'])->name('driver.dashboard');
+        
+        // ออเดอร์
         Route::post('/orders/{id}/accept', [DriverController::class, 'acceptJob'])->name('driver.orders.accept');
-        Route::put('/orders/{id}/delivery-status', [DriverController::class, 'updateDeliveryStatus'])->name('driver.orders.status');
+        Route::put('/orders/{id}/status', [DriverController::class, 'updateStatus'])->name('driver.orders.status');
+        Route::post('/orders/{id}/cancel', [DriverController::class, 'cancelOrder'])->name('driver.orders.cancel');
+        
         Route::get('/history', [DriverController::class, 'history'])->name('driver.history');
         Route::get('/profile', [DriverController::class, 'profile'])->name('driver.profile');
         Route::put('/profile', [DriverController::class, 'updateProfile'])->name('driver.profile.update');

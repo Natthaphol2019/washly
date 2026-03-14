@@ -161,7 +161,7 @@ class AdminController extends Controller
     public function manageOrders()
     {
         // ... (โค้ดดึงออเดอร์ของซีเหมือนเดิม)
-        $orders = Order::with(['user', 'package'])->orderBy('created_at', 'desc')->get();
+        $orders = Order::with(['user', 'package', 'driver'])->orderBy('created_at', 'desc')->get();
 
         // 👇 เพิ่มบรรทัดนี้: ดึงรายชื่อพนักงานขับรถทั้งหมดไปแสดงใน Dropdown เลือกคนขับ
         $drivers = User::where('role', 'driver')->get();
@@ -603,28 +603,32 @@ class AdminController extends Controller
     }
 
     public function updateCustomer(Request $request, $id)
-    {
-        $customer = User::where('role', 'customer')->findOrFail($id);
-        $request->validate([
-            'fullname' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users,username,' . $customer->id,
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-        ]);
+{
+    $customer = User::where('role', 'customer')->findOrFail($id);
+    
+    $request->validate([
+        'fullname' => 'required|string|max:255',
+        'username' => 'required|string|max:255|unique:users,username,' . $customer->id,
+        'phone' => 'nullable|string|max:20',
+        'address' => 'nullable|string',
+        // 👇 เพิ่มกฎตรวจสอบระยะทางให้เป็นตัวเลขและห้ามติดลบ
+        'delivery_distance' => 'nullable|numeric|min:0', 
+    ]);
 
-        $customer->fullname = $request->fullname;
-        $customer->username = $request->username;
-        $customer->phone = $request->phone;
-        $customer->address = $request->address;
+    $customer->fullname = $request->fullname;
+    $customer->username = $request->username;
+    $customer->phone = $request->phone;
+    $customer->address = $request->address;
+    $customer->delivery_distance = $request->delivery_distance; // บันทึกระยะทาง
 
-        // อัปเดตรหัสผ่านเฉพาะตอนที่พิมพ์เข้ามาใหม่
-        if ($request->filled('password')) {
-            $customer->password = Hash::make($request->password);
-        }
-        $customer->save();
-
-        return redirect()->route('admin.customers.index')->with('success', 'อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว!');
+    if ($request->filled('password')) {
+        $customer->password = Hash::make($request->password);
     }
+    
+    $customer->save(); // เซฟรอบเดียวจบ
+
+    return redirect()->route('admin.customers.index')->with('success', 'อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว!');
+}
 
     public function destroyCustomer($id)
     {
@@ -768,15 +772,80 @@ class AdminController extends Controller
     }
 
     // ==========================================
+    // ❌ แอดมินยกเลิกออเดอร์ (พร้อมระบุเหตุผล)
+    // ==========================================
+    public function cancelOrder(Request $request, $id)
+    {
+        $request->validate([
+            'cancel_reason' => 'required|string|max:1000'
+        ]);
+
+        $order = Order::findOrFail($id);
+
+        if ($order->status === 'cancelled') {
+            return back()->with('error', 'ออเดอร์นี้ถูกยกเลิกไปแล้วครับ');
+        }
+
+        $oldStatus = $order->status;
+        $order->status = 'cancelled';
+        $order->cancel_reason = $request->cancel_reason; // บันทึกเหตุผล
+        $order->save();
+
+        // บันทึก Timeline
+        OrderLog::create([
+            'order_id' => $order->id,
+            'user_id' => Auth::id(),
+            'old_status' => $oldStatus,
+            'new_status' => 'cancelled'
+        ]);
+
+        // แจ้งเตือนลูกค้า
+        if ($order->user) {
+            $order->user->notify(new SystemNotification(
+                'ออเดอร์ถูกยกเลิก ❌',
+                'ออเดอร์ ' . $order->order_number . ' ของคุณถูกยกเลิก เนื่องจาก: ' . $request->cancel_reason,
+                route('customer.orders'),
+                'danger'
+            ));
+        }
+
+        return back()->with('success', 'ยกเลิกออเดอร์ ' . $order->order_number . ' เรียบร้อยแล้ว');
+    }
+    // ==========================================
     // 🚚 แอดมินจ่ายงานให้คนขับ
     // ==========================================
     public function assignDriver(Request $request, $id)
     {
+        // 🚨 ดักจับทันที ถ้าไม่ได้เลือกคนขับจาก Dropdown ให้เด้งเตือน!
+        if (!$request->filled('driver_id')) {
+            return back()->with('error', '⚠️ กรุณาเลือกคนขับจากตัวเลือกก่อนกดจ่ายงานครับ!');
+        }
+
         $order = Order::findOrFail($id);
         $request->validate(['driver_id' => 'required|exists:users,id']);
 
         $order->driver_id = $request->driver_id;
-        $order->status = 'picking_up'; // มอบหมายปุ๊บ ให้ถือว่ากำลังไปรับเลย
+        $oldStatus = $order->status;
+
+        if (in_array($oldStatus, ['pending', 'pending_pickup'])) {
+            $order->status = 'picking_up';
+
+            OrderLog::create([
+                'order_id' => $order->id,
+                'user_id' => Auth::id(),
+                'old_status' => $oldStatus,
+                'new_status' => 'picking_up'
+            ]);
+
+            if ($order->user) {
+                $order->user->notify(new SystemNotification(
+                    'ไรเดอร์กำลังไปรับผ้า 🛵',
+                    'ออเดอร์ ' . $order->order_number . ' กำลังมีไรเดอร์เดินทางไปรับผ้าของคุณครับ',
+                    route('customer.orders'),
+                    'info'
+                ));
+            }
+        }
         $order->save();
 
         return back()->with('success', 'มอบหมายงานให้พนักงานขับรถสำเร็จ!');

@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role.admin_or_staff' => \App\Http\Middleware\EnsureAdminOrStaff::class,
             'role.customer' => \App\Http\Middleware\EnsureCustomerRole::class,
+            'role.driver' => \App\Http\Middleware\EnsureDriverRole::class, // 👈 เพิ่มบรรทัดนี้สำหรับคนขับ
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

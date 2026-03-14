@@ -11,6 +11,7 @@ use App\Notifications\SystemNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
+use Carbon\Carbon;
 
 class BookingController extends Controller
 {
@@ -76,8 +77,16 @@ class BookingController extends Controller
 
     public function showBookingForm()
     {
+        // 🌟 1. ดึงเวลาและวันที่สำหรับระบบ วันนี้/พรุ่งนี้
+        $now = Carbon::now()->timezone('Asia/Bangkok');
+        $isClosedToday = $now->format('H:i') >= '17:00'; // เช็กว่าเกิน 17:00 น. หรือยัง
+
+        $today = clone $now;
+        $tomorrow = clone $now->addDay();
+
         $packages = Package::where('is_active', true)->orderBy('id', 'asc')->get();
-        $timeSlots = TimeSlot::all();
+        $timeSlots = TimeSlot::orderBy('id')->get();
+
         $catalog = $this->addonCatalog();
         $addons = array_values($catalog);
         $detergentAddons = array_values(array_filter($addons, fn($item) => ($item['category'] ?? null) === 'detergent'));
@@ -90,32 +99,68 @@ class BookingController extends Controller
             $packageDefaultAddonMap[$package->id] = $defaultCode ? ($catalog[$defaultCode]['name'] ?? null) : null;
         }
 
-        // ดึงคิวของวันนี้ทั้งหมด (ยกเว้นที่ถูกยกเลิก)
+        // 🌟 2. ดึงคิวของ "วันนี้"
         $todayQueues = Order::with(['user', 'timeSlot'])
-            ->whereDate('created_at', \Carbon\Carbon::today())
+            ->where(function ($q) use ($today) {
+                // ออเดอร์ที่ระบุ pickup_date เป็นวันนี้ หรือ ออเดอร์เก่าที่ไม่มี pickup_date แต่สร้างวันนี้
+                $q->whereDate('pickup_date', $today->format('Y-m-d'))
+                    ->orWhere(function ($sub) use ($today) {
+                    $sub->whereNull('pickup_date')->whereDate('created_at', $today->format('Y-m-d'));
+                });
+            })
             ->where('status', '!=', 'cancelled')
-            ->orderBy('created_at', 'asc') // เรียงตามลำดับเวลาที่จองเข้ามา
+            ->orderBy('created_at', 'asc')
             ->get();
 
-        // 🌟 แก้ไข: เพิ่ม 'todayQueues' เข้าไปใน compact แล้ว เพื่อไม่ให้หน้าเว็บ Error
-        return view('customer.book', compact('packages', 'timeSlots', 'addons', 'detergentAddons', 'softenerAddons', 'serviceAddons', 'packageDefaultAddonMap', 'todayQueues'));
+        // 🌟 3. ดึงคิวของ "พรุ่งนี้"
+        $tomorrowQueues = Order::with(['user', 'timeSlot'])
+            ->whereDate('pickup_date', $tomorrow->format('Y-m-d'))
+            ->where('status', '!=', 'cancelled')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return view('customer.book', compact(
+            'packages',
+            'timeSlots',
+            'addons',
+            'detergentAddons',
+            'softenerAddons',
+            'serviceAddons',
+            'packageDefaultAddonMap',
+            'todayQueues',      // ส่งคิววันนี้ไป View
+            'tomorrowQueues',   // ส่งคิวพรุ่งนี้ไป View
+            'today',            // วันที่วันนี้ (ใช้แปลงไทยใน View)
+            'tomorrow',         // วันที่พรุ่งนี้
+            'isClosedToday'     // ส่งสถานะร้านไปใช้บล็อกปุ่มใน View
+        ));
     }
 
     public function store(Request $request)
     {
-        // 1. ตรวจสอบข้อมูล
+        $now = \Carbon\Carbon::now()->timezone('Asia/Bangkok');
+        $isClosedToday = $now->format('H:i') >= '17:00';
+
+        // ป้องกันคนแฮกยิงข้อมูลมาตอนร้านปิด
+        if ($request->input('pickup_date') === 'today' && $isClosedToday) {
+            return back()->withErrors(['closed' => 'ขออภัยครับ ปิดรับจองคิวสำหรับวันนี้แล้ว กรุณาเลือกจองเป็น "พรุ่งนี้" แทนนะครับ'])->withInput();
+        }
+
+        // 1. ตรวจสอบข้อมูล (แก้ Validate Addons ให้ยืดหยุ่นขึ้น ป้องกัน Error)
         $request->validate([
+            'pickup_date' => 'required|in:today,tomorrow',
             'package_id' => 'required|exists:packages,id',
             'time_slot_id' => 'required|exists:time_slots,id',
             'pickup_address' => 'required|string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'payment_method' => 'required|in:transfer,cash',
+            'customer_note' => 'nullable|string|max:1000',
             'use_customer_detergent' => 'nullable|boolean',
             'use_customer_softener' => 'nullable|boolean',
             'addons' => 'nullable|array',
-            'addons.*.code' => 'required|string',
-            'addons.*.qty' => 'required|integer|min:1|max:10',
+            'addons.*.code' => 'nullable|string', // 👈 เปลี่ยนเป็น nullable 
+            'addons.*.qty' => 'nullable|integer|min:1|max:10', // 👈 เปลี่ยนเป็น nullable
+            'extra_dry_qty' => 'nullable|array',
         ]);
 
         $user = Auth::user();
@@ -126,7 +171,7 @@ class BookingController extends Controller
         $useCustomerDetergent = $request->boolean('use_customer_detergent');
         $useCustomerSoftener = $request->boolean('use_customer_softener');
 
-        // จัดการเรื่อง Addons (คงไว้ 100% ไม่มีการลบ)
+        // จัดการเรื่อง Addons
         foreach ($request->input('addons', []) as $addonInput) {
             $code = (string) ($addonInput['code'] ?? '');
             $qty = (int) ($addonInput['qty'] ?? 0);
@@ -152,6 +197,24 @@ class BookingController extends Controller
                 'unit_price' => $addon['price'],
                 'qty' => $qty,
                 'line_total' => $lineTotal,
+            ];
+        }
+
+        // 🌟 เพิ่มระบบบวกค่า "อบผ้าเพิ่ม" ลงในบิลอัตโนมัติ
+        $extraDryQty = (int) $request->input("extra_dry_qty.{$package->id}", 0);
+        if ($extraDryQty > 0) {
+            $extraDryTotal = $extraDryQty * 10; // ครั้งละ 10 บาท
+            $addonTotal += $extraDryTotal;
+
+            // ยัดเป็นเมนูเสริมเนียนๆ ไปเลย
+            $selectedAddons[] = [
+                'code' => 'extra_dry',
+                'name' => 'อบผ้าเพิ่ม (' . ($extraDryQty * 10) . ' นาที)',
+                'category' => 'service',
+                'unit_price' => 10,
+                'qty' => $extraDryQty,
+                'line_total' => $extraDryTotal,
+                'auto_selected' => false,
             ];
         }
 
@@ -198,14 +261,19 @@ class BookingController extends Controller
             }
         }
 
-        // 📍 รับพิกัดอย่างเดียว ไม่บวกค่าส่ง
+        // 📍 รับพิกัด
         $customerLat = $request->input('latitude', $user->latitude);
         $customerLng = $request->input('longitude', $user->longitude);
 
         $subtotal = (float) $package->price;
-        $grandTotal = $subtotal + $addonTotal; // ยอดรวมเฉพาะค่าแพ็กเกจ + เมนูเสริม
+        $grandTotal = $subtotal + $addonTotal;
         $paymentMethod = $request->input('payment_method');
         $paymentStatus = $paymentMethod === 'cash' ? 'pending_cash' : 'unpaid';
+
+        // คำนวณวันที่รับผ้าจริงๆ จากตัวเลือก
+        $actualPickupDate = $request->input('pickup_date') === 'today'
+            ? \Carbon\Carbon::now()->timezone('Asia/Bangkok')->format('Y-m-d')
+            : \Carbon\Carbon::now()->timezone('Asia/Bangkok')->addDay()->format('Y-m-d');
 
         // สร้างออเดอร์
         $orderNumber = 'ORD-' . date('Ymd') . '-' . rand(1000, 9999);
@@ -214,13 +282,15 @@ class BookingController extends Controller
         $order->user_id = $user->id;
         $order->package_id = $request->package_id;
         $order->time_slot_id = $request->time_slot_id;
+        $order->pickup_date = $actualPickupDate;
         $order->pickup_address = $request->pickup_address;
+        $order->customer_note = $request->customer_note;
 
-        // บันทึกพิกัด (แต่ไม่คิดเงิน)
+        // บันทึกพิกัด
         $order->pickup_latitude = $customerLat;
         $order->pickup_longitude = $customerLng;
         $order->pickup_map_link = "https://maps.google.com/?q={$customerLat},{$customerLng}";
-        $order->distance = null; // ปล่อยว่างไว้เพราะยกเลิกระยะทางแล้ว
+        $order->distance = null;
 
         $order->use_customer_detergent = $useCustomerDetergent;
         $order->use_customer_softener = $useCustomerSoftener;

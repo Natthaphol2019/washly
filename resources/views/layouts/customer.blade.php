@@ -29,7 +29,6 @@
                 <span class="h-12 w-36 sm:w-48 overflow-hidden flex items-center shrink-0">
                     <img src="{{ asset('Brand.png') }}" alt="Washly Logo" class="h-20 sm:h-24 w-auto max-w-none -ml-4 sm:-ml-5 drop-shadow-sm">
                 </span>
-                <span class="hidden lg:inline text-[11px] tracking-[0.22em] uppercase text-pink-500/90 dark:text-pink-300/90 font-semibold whitespace-nowrap">Laundry Delivery</span>
             </a>
 
             <div class="hidden md:flex items-center gap-1 bg-gray-100/80 dark:bg-slate-900/50 p-1.5 rounded-full shadow-inner border border-gray-200/50 dark:border-slate-700">

@@ -1,275 +1,242 @@
 @extends('layouts.admin')
 
 @section('title', 'จัดการออเดอร์ - Washly Admin')
+@section('page_title', 'จัดการออเดอร์')
 
 @section('content')
-    <div class="max-w-7xl mx-auto w-full flex flex-col gap-6 pb-10">
+<div class="space-y-6 pb-10">
 
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    {{-- หัวข้อและปุ่มรีเฟรช --}}
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl washly-card shadow-sm flex items-center justify-center border border-sky-100 dark:border-slate-700">
+                <i class="fa-solid fa-list-check text-2xl text-sky-500"></i>
+            </div>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                    <i class="fa-solid fa-list-check text-pink-500 mr-2"></i> จัดการออเดอร์ (Orders)
-                </h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">อัปเดตสถานะ ตรวจสอบสลิปโอนเงิน และจัดการออเดอร์</p>
-            </div>
-            <button onclick="window.location.reload()"
-                class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-300 px-4 py-2 rounded-xl text-sm font-medium transition-colors shadow-sm flex items-center gap-2 w-max">
-                <i class="fa-solid fa-rotate-right"></i> รีเฟรชข้อมูล
-            </button>
-        </div>
-
-        @if (session('success'))
-            <div
-                class="bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 p-4 rounded-r-xl shadow-sm flex items-center gap-3">
-                <i class="fa-solid fa-circle-check text-green-500 text-xl"></i>
-                <p class="font-medium text-green-800 dark:text-green-400">{{ session('success') }}</p>
-            </div>
-        @endif
-
-        <div
-            class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden transition-colors">
-            <div
-                class="p-5 border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50 flex justify-between items-center">
-                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100"><i
-                        class="fa-solid fa-list-ul text-pink-500 mr-2"></i> รายการออเดอร์ทั้งหมด</h2>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr
-                            class="bg-pink-50/50 dark:bg-slate-900/50 text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wider border-b border-pink-100 dark:border-slate-700">
-                            <th class="p-4 font-medium whitespace-nowrap">ออเดอร์</th>
-                            <th class="p-4 font-medium w-full">ลูกค้า</th>
-                            <th class="p-4 font-medium whitespace-nowrap">แพ็กเกจ/สลิป</th>
-                            <th class="p-4 font-medium text-center whitespace-nowrap w-px">สถานะ</th>
-                            <th class="p-4 font-medium text-center whitespace-nowrap w-px">จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
-                        @forelse($orders as $order)
-                            <tr class="hover:bg-pink-50/30 dark:hover:bg-slate-700/50 transition-colors">
-
-                                <td class="p-4 whitespace-nowrap">
-                                    <p class="font-bold text-pink-600 dark:text-pink-400">{{ $order->order_number }}</p>
-                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                        {{ \Carbon\Carbon::parse($order->created_at)->addYears(543)->format('d/m/Y H:i') }}
-                                    </p>
-                                </td>
-                                <td class="p-4">
-                                    <p class="font-medium text-gray-800 dark:text-gray-200">
-                                        {{ $order->user->fullname ?? 'ไม่ระบุ' }}</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1"><i
-                                            class="fa-solid fa-phone mr-1"></i> {{ $order->user->phone ?? '-' }}</p>
-
-                                    @if ($order->pickup_latitude && $order->pickup_longitude)
-                                        <div class="mt-2 flex flex-col items-start gap-1.5">
-                                            <a href="https://www.google.com/maps/dir/?api=1&origin={{ env('SHOP_LATITUDE') }},{{ env('SHOP_LONGITUDE') }}&destination={{ $order->pickup_latitude }},{{ $order->pickup_longitude }}&travelmode=driving"
-                                                target="_blank"
-                                                class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors">
-                                                <i class="fa-solid fa-map-location-dot"></i> นำทางไปรับผ้า
-                                            </a>
-
-                                            {{-- ปิดซ่อนเงื่อนไขค่าส่งชั่วคราว --}}
-                                            {{-- 
-        <p class="text-[10px] text-gray-500 mt-1">* 1.5 กม. แรกฟรี / ส่วนเกิน กม. ละ 5 บ.</p> 
-        --}}
-                                        </div>
-                                    @endif
-                                </td>
-
-                                <td class="p-4 whitespace-nowrap">
-                                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {{ $order->package->name ?? '-' }}</p>
-                                    <p class="text-xs text-pink-500 dark:text-pink-400 font-bold mt-1 mb-2">
-                                        ฿{{ number_format($order->total_price) }}</p>
-                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mb-2">
-                                        วิธีชำระ:
-                                        <span
-                                            class="font-semibold {{ ($order->payment_method ?? 'transfer') === 'cash' ? 'text-amber-600 dark:text-amber-300' : 'text-blue-600 dark:text-blue-300' }}">
-                                            {{ ($order->payment_method ?? 'transfer') === 'cash' ? 'เงินสดปลายทาง' : 'โอน/สแกน QR' }}
-                                        </span>
-                                    </p>
-
-                                    @if (!empty($order->selected_addons))
-                                        <div class="mb-2 text-[11px] text-gray-500 dark:text-gray-400">
-                                            @foreach ($order->selected_addons as $addon)
-                                                <p>
-                                                    {{ $addon['name'] ?? '-' }} x {{ $addon['qty'] ?? 1 }}
-                                                    @if (!empty($addon['auto_selected']))
-                                                        <span
-                                                            class="ml-1 inline-flex items-center rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 px-2 py-0.5 text-[10px] font-semibold">auto</span>
-                                                    @endif
-                                                </p>
-                                            @endforeach
-                                        </div>
-                                    @endif
-
-                                    <div class="flex items-center gap-1">
-                                        @if ($order->payment_status == 'paid')
-                                            @if (($order->payment_method ?? 'transfer') === 'transfer' && $order->payment_slip)
-                                                <button type="button"
-                                                    onclick="showSlip('{{ asset('storage/' . $order->payment_slip) }}')"
-                                                    class="inline-flex items-center gap-1 text-[11px] bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300 px-2 py-1 rounded border border-gray-200 dark:border-slate-600 hover:bg-gray-200 transition-colors focus:outline-none">
-                                                    <i class="fa-solid fa-receipt"></i> ดูสลิป
-                                                </button>
-                                            @endif
-                                            <span class="text-[11px] text-green-600 dark:text-green-400 font-bold ml-1">
-                                                <i class="fa-solid fa-circle-check"></i> ชำระแล้ว
-                                            </span>
-                                        @elseif($order->payment_status == 'pending_cash')
-                                            <span
-                                                class="inline-flex items-center gap-1 text-[11px] bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 px-2 py-1 rounded border border-amber-200 dark:border-amber-800">
-                                                <i class="fa-solid fa-hand-holding-dollar"></i> รอรับเงินสด
-                                            </span>
-                                            <form action="{{ route('admin.orders.confirm_cash', $order->id) }}"
-                                                method="POST" class="m-0">
-                                                @csrf
-                                                <button type="submit"
-                                                    class="inline-flex items-center justify-center text-[11px] bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 px-2 py-1 rounded border border-green-200 dark:border-green-800 hover:bg-green-200 dark:hover:bg-green-800/60 transition-colors shadow-sm focus:outline-none"
-                                                    title="ยืนยันรับเงินสด">
-                                                    <i class="fa-solid fa-check mr-1"></i> รับเงินแล้ว
-                                                </button>
-                                            </form>
-                                        @elseif($order->payment_status == 'reviewing' && $order->payment_slip)
-                                            <button type="button"
-                                                onclick="showSlip('{{ asset('storage/' . $order->payment_slip) }}')"
-                                                class="inline-flex items-center gap-1 text-[11px] bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 px-2 py-1 rounded border border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors shadow-sm focus:outline-none">
-                                                <i class="fa-solid fa-image"></i> ดูสลิป
-                                            </button>
-
-                                            <form action="{{ route('admin.orders.approve_payment', $order->id) }}"
-                                                method="POST" class="m-0">
-                                                @csrf
-                                                <button type="submit"
-                                                    class="inline-flex items-center justify-center text-[11px] bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 w-6 h-6 rounded border border-green-200 dark:border-green-800 hover:bg-green-200 dark:hover:bg-green-800/60 transition-colors shadow-sm focus:outline-none"
-                                                    title="อนุมัติยอดเงิน">
-                                                    <i class="fa-solid fa-check"></i>
-                                                </button>
-                                            </form>
-
-                                            <form action="{{ route('admin.orders.reject_slip', $order->id) }}"
-                                                method="POST" class="m-0">
-                                                @csrf
-                                                <button type="button" onclick="confirmRejectSlip(this.closest('form'))"
-                                                    class="inline-flex items-center justify-center text-[11px] bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 w-6 h-6 rounded border border-red-200 dark:border-red-800 hover:bg-red-200 dark:hover:bg-red-800/60 transition-colors shadow-sm focus:outline-none"
-                                                    title="ปฏิเสธสลิป ให้ส่งใหม่">
-                                                    <i class="fa-solid fa-rotate-left"></i>
-                                                </button>
-                                            </form>
-                                        @else
-                                            <span
-                                                class="inline-flex items-center gap-1 text-[11px] bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400 px-2 py-1 rounded border border-gray-200 dark:border-slate-600">
-                                                <i class="fa-solid fa-hourglass-half"></i> รอชำระ
-                                            </span>
-                                        @endif
-                                    </div>
-                                </td>
-
-                                <td class="p-4 text-center whitespace-nowrap w-px">
-                                    @php
-                                        $statusStyles = [
-                                            'pending' =>
-                                                'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-                                            'picked_up' =>
-                                                'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-                                            'processing' =>
-                                                'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-                                            'delivering' =>
-                                                'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
-                                            'completed' =>
-                                                'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-                                            'cancelled' =>
-                                                'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-                                        ];
-                                        $statusLabels = [
-                                            'pending' => 'รอรับผ้า',
-                                            'picked_up' => 'รับผ้ามาแล้ว',
-                                            'processing' => 'กำลังซัก/อบ',
-                                            'delivering' => 'กำลังไปส่งคืน',
-                                            'completed' => 'เสร็จสิ้น',
-                                            'cancelled' => 'ยกเลิก',
-                                        ];
-                                    @endphp
-                                    <span
-                                        class="px-3 py-1.5 rounded-full text-xs font-bold {{ $statusStyles[$order->status] ?? 'bg-gray-100 text-gray-700' }}">
-                                        {{ $statusLabels[$order->status] ?? $order->status }}
-                                    </span>
-                                </td>
-
-                                <td class="p-4 text-center whitespace-nowrap w-px">
-                                    <form action="{{ route('admin.orders.status', $order->id) }}" method="POST"
-                                        class="flex flex-row items-center gap-2 justify-center m-0">
-                                        @csrf
-                                        @method('PUT')
-                                        <select name="status"
-                                            class="text-sm border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded-lg shadow-sm focus:border-pink-400 py-1.5 px-2 outline-none w-auto min-w-[120px]">
-                                            @foreach ($statusLabels as $key => $label)
-                                                <option value="{{ $key }}"
-                                                    {{ $order->status == $key ? 'selected' : '' }}>{{ $label }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        <button type="submit"
-                                            class="bg-pink-500 hover:bg-pink-600 text-white text-xs px-3 py-2 rounded-lg transition-colors shadow-sm shrink-0">อัปเดต</button>
-                                    </form>
-                                </td>
-
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="p-10 text-center text-gray-500 dark:text-gray-400">
-                                    <div class="inline-block p-4 rounded-full bg-pink-50 dark:bg-slate-800 mb-3"><i
-                                            class="fa-solid fa-inbox text-4xl text-pink-300 dark:text-gray-600"></i></div>
-                                    <p class="text-lg font-medium">ยังไม่มีออเดอร์ในระบบ</p>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                <h1 class="text-2xl font-bold washly-shell">จัดการออเดอร์</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400">อัปเดตสถานะ ตรวจสลิป และจ่ายงานให้คนขับ</p>
             </div>
         </div>
+        
+        <button onclick="window.location.reload()" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
+            <i class="fa-solid fa-rotate-right"></i> รีเฟรชข้อมูล
+        </button>
     </div>
 
-    <script>
-        // ฟังก์ชันโชว์รูปสลิป
-        function showSlip(imageUrl) {
-            Swal.fire({
-                title: 'หลักฐานการโอนเงิน',
-                imageUrl: imageUrl,
-                imageAlt: 'สลิปโอนเงิน',
-                confirmButtonText: 'ปิดหน้าต่าง',
-                confirmButtonColor: '#ec4899', // pink-500
-                background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
-                color: document.documentElement.classList.contains('dark') ? '#f8fafc' : '#1e293b',
-                customClass: {
-                    popup: 'rounded-3xl',
-                    image: 'rounded-xl max-h-[60vh] object-contain border border-gray-200 dark:border-slate-700'
-                }
-            });
-        }
+    @if (session('success'))
+        <div class="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 p-4 rounded-xl shadow-sm flex items-center gap-3">
+            <i class="fa-solid fa-circle-check text-emerald-500 text-xl"></i>
+            <p class="font-medium text-emerald-700 dark:text-emerald-400">{{ session('success') }}</p>
+        </div>
+    @endif
 
-        // ฟังก์ชันถามยืนยันก่อนลบ/ปฏิเสธสลิป
-        function confirmRejectSlip(form) {
-            Swal.fire({
-                title: 'ปฏิเสธสลิปใบนี้?',
-                text: "สลิปนี้จะถูกลบออก และลูกค้าจะต้องอัปโหลดสลิปเข้ามาใหม่",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#94a3b8',
-                confirmButtonText: '<i class="fa-solid fa-trash"></i> ใช่, ปฏิเสธสลิป',
-                cancelButtonText: 'ยกเลิก',
-                background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
-                color: document.documentElement.classList.contains('dark') ? '#f8fafc' : '#1e293b',
-                customClass: {
-                    popup: 'rounded-3xl'
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
-            })
-        }
-    </script>
+    {{-- ตารางออเดอร์ --}}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div class="p-5 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
+            <h2 class="text-lg font-bold washly-shell flex items-center gap-2">
+                <i class="fa-solid fa-clipboard-list text-sky-500"></i> รายการออเดอร์ทั้งหมด
+            </h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                    <tr>
+                        <th class="px-6 py-4 font-semibold">ออเดอร์</th>
+                        <th class="px-6 py-4 font-semibold">ลูกค้า</th>
+                        <th class="px-6 py-4 font-semibold">รายการ/ชำระเงิน</th>
+                        <th class="px-6 py-4 font-semibold text-center">พนักงานขับรถ</th> {{-- 👈 คอลัมน์ใหม่ --}}
+                        <th class="px-6 py-4 font-semibold text-center">สถานะปัจจุบัน</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 washly-shell">
+                    @forelse($orders as $order)
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+
+                            {{-- 1. เลขออเดอร์ --}}
+                            <td class="px-6 py-4">
+                                <p class="font-bold text-sky-600 dark:text-sky-400">{{ $order->order_number }}</p>
+                                <p class="text-xs text-gray-400 mt-1">
+                                    {{ \Carbon\Carbon::parse($order->created_at)->addYears(543)->format('d/m/Y H:i') }}
+                                </p>
+                            </td>
+
+                            {{-- 2. ลูกค้า --}}
+                            <td class="px-6 py-4">
+                                <p class="font-bold">{{ $order->user->fullname ?? 'ไม่ระบุ' }}</p>
+                                <p class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-phone mr-1"></i> {{ $order->user->phone ?? '-' }}</p>
+
+                                @if ($order->pickup_latitude && $order->pickup_longitude)
+                                    <div class="mt-2">
+                                        <a href="https://www.google.com/maps/dir/?api=1&origin={{ env('SHOP_LATITUDE') }},{{ env('SHOP_LONGITUDE') }}&destination={{ $order->pickup_latitude }},{{ $order->pickup_longitude }}&travelmode=driving"
+                                            target="_blank"
+                                            class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-400 px-3 py-1.5 rounded-lg text-[11px] font-medium transition">
+                                            <i class="fa-solid fa-map-location-dot"></i> นำทางไปรับ
+                                        </a>
+                                    </div>
+                                @endif
+                            </td>
+
+                            {{-- 3. แพ็กเกจและการชำระเงิน --}}
+                            <td class="px-6 py-4">
+                                <p class="font-semibold text-gray-700 dark:text-gray-200">{{ $order->package->name ?? '-' }}</p>
+                                <p class="text-sm font-bold text-sky-500 mt-1 mb-2">฿{{ number_format($order->total_price) }}</p>
+                                
+                                <div class="text-[11px] text-gray-500 mb-2">
+                                    วิธีชำระ:
+                                    <span class="font-semibold {{ ($order->payment_method ?? 'transfer') === 'cash' ? 'text-amber-500' : 'text-blue-500' }}">
+                                        {{ ($order->payment_method ?? 'transfer') === 'cash' ? 'เงินสด' : 'โอน/สแกน QR' }}
+                                    </span>
+                                </div>
+
+                                {{-- ปุ่มจัดการสลิป/เงินสด --}}
+                                <div class="flex items-center gap-1">
+                                    @if ($order->payment_status == 'paid')
+                                        @if (($order->payment_method ?? 'transfer') === 'transfer' && $order->payment_slip)
+                                            <button type="button" onclick="showSlip('{{ asset('storage/' . $order->payment_slip) }}')" class="inline-flex items-center gap-1 text-[11px] bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-slate-200 transition">
+                                                <i class="fa-solid fa-receipt"></i> ดูสลิป
+                                            </button>
+                                        @endif
+                                        <span class="text-[11px] text-emerald-500 font-bold ml-1"><i class="fa-solid fa-circle-check"></i> ชำระแล้ว</span>
+                                    
+                                    @elseif($order->payment_status == 'pending_cash')
+                                        <span class="inline-flex items-center gap-1 text-[11px] bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-900/30 px-2 py-1 rounded">
+                                            <i class="fa-solid fa-hand-holding-dollar"></i> รอเก็บเงินสด
+                                        </span>
+                                        <form action="{{ route('admin.orders.confirm_cash', $order->id) }}" method="POST" class="m-0 inline">
+                                            @csrf
+                                            <button type="submit" class="inline-flex items-center justify-center text-[11px] bg-emerald-100 text-emerald-700 w-6 h-6 rounded hover:bg-emerald-200 transition ml-1" title="ยืนยันรับเงินแล้ว">
+                                                <i class="fa-solid fa-check"></i>
+                                            </button>
+                                        </form>
+
+                                    @elseif($order->payment_status == 'reviewing' && $order->payment_slip)
+                                        <button type="button" onclick="showSlip('{{ asset('storage/' . $order->payment_slip) }}')" class="inline-flex items-center gap-1 text-[11px] bg-sky-100 text-sky-700 px-2 py-1 rounded hover:bg-sky-200 transition">
+                                            <i class="fa-solid fa-image"></i> ตรวจสลิป
+                                        </button>
+                                        <form action="{{ route('admin.orders.approve_payment', $order->id) }}" method="POST" class="m-0 inline">
+                                            @csrf
+                                            <button type="submit" class="inline-flex items-center justify-center text-[11px] bg-emerald-100 text-emerald-700 w-6 h-6 rounded hover:bg-emerald-200 transition ml-1" title="อนุมัติ"><i class="fa-solid fa-check"></i></button>
+                                        </form>
+                                        <form action="{{ route('admin.orders.reject_slip', $order->id) }}" method="POST" class="m-0 inline">
+                                            @csrf
+                                            <button type="button" onclick="confirmRejectSlip(this.closest('form'))" class="inline-flex items-center justify-center text-[11px] bg-rose-100 text-rose-700 w-6 h-6 rounded hover:bg-rose-200 transition ml-1" title="ปฏิเสธ"><i class="fa-solid fa-xmark"></i></button>
+                                        </form>
+                                    @else
+                                        <span class="text-[11px] text-gray-400 bg-gray-100 px-2 py-1 rounded dark:bg-slate-700"><i class="fa-solid fa-hourglass-half"></i> รอชำระเงิน</span>
+                                    @endif
+                                </div>
+                            </td>
+
+                            {{-- 4. 🚚 จ่ายงานให้คนขับ (Assign Driver) --}}
+                            <td class="px-6 py-4 text-center">
+                                @if($order->driver_id)
+                                    {{-- ถ้ามีคนขับแล้ว โชว์ชื่อคนขับ --}}
+                                    <div class="inline-flex items-center gap-2 bg-sky-50 dark:bg-sky-900/30 border border-sky-100 dark:border-sky-800 px-3 py-1.5 rounded-xl">
+                                        <div class="w-6 h-6 rounded-full bg-sky-500 text-white flex items-center justify-center text-[10px] font-bold">
+                                            {{ mb_substr($order->driver->fullname ?? 'D', 0, 1) }}
+                                        </div>
+                                        <span class="text-xs font-semibold text-sky-700 dark:text-sky-400">{{ $order->driver->fullname ?? 'ไม่ทราบชื่อ' }}</span>
+                                    </div>
+                                @else
+                                    {{-- ถ้ายังไม่มี ให้เลือกจ่ายงาน --}}
+                                    @if($order->status == 'pending_pickup')
+                                        <form action="{{ route('admin.orders.assign_driver', $order->id) }}" method="POST" class="m-0 flex flex-col items-center gap-2">
+                                            @csrf
+                                            <select name="driver_id" required class="text-xs border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg py-1.5 px-2 outline-none focus:ring-1 focus:ring-sky-500 w-32">
+                                                <option value="" disabled selected>-- เลือกคนขับ --</option>
+                                                @foreach($drivers as $driver)
+                                                    <option value="{{ $driver->id }}">{{ $driver->fullname }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="submit" class="text-[10px] washly-brand-btn text-white px-3 py-1 rounded-lg w-full hover:brightness-110 shadow-sm"><i class="fa-solid fa-motorcycle mr-1"></i> จ่ายงาน</button>
+                                        </form>
+                                    @else
+                                        <span class="text-xs text-gray-400">-</span>
+                                    @endif
+                                @endif
+                            </td>
+
+                            {{-- 5. สถานะปัจจุบัน (อัปเดต) --}}
+                            <td class="px-6 py-4 text-center">
+                                @php
+                                    $statusLabels = [
+                                        'pending' => 'รออนุมัติ',
+                                        'pending_pickup' => 'รอรับผ้า',
+                                        'picking_up' => 'กำลังไปรับ',
+                                        'processing' => 'กำลังซัก/อบ',
+                                        'washing_completed' => 'ซักเสร็จ/รอส่ง',
+                                        'delivering' => 'กำลังไปส่ง',
+                                        'completed' => 'เสร็จสิ้น',
+                                        'cancelled' => 'ยกเลิก',
+                                    ];
+                                @endphp
+                                <form action="{{ route('admin.orders.status', $order->id) }}" method="POST" class="flex flex-col items-center gap-2 m-0">
+                                    @csrf
+                                    @method('PUT')
+                                    <select name="status" class="text-xs border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 font-semibold rounded-lg py-1.5 px-2 outline-none focus:border-sky-500 w-32 text-center">
+                                        @foreach ($statusLabels as $key => $label)
+                                            <option value="{{ $key }}" {{ $order->status == $key ? 'selected' : '' }}>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    <button type="submit" class="text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-600 dark:text-slate-300 dark:hover:bg-slate-500 px-3 py-1 rounded-lg w-full transition">บันทึกสถานะ</button>
+                                </form>
+                            </td>
+
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="p-12 text-center text-gray-400">
+                                <div class="inline-block p-5 rounded-full bg-slate-50 dark:bg-slate-800 mb-4 border border-slate-100 dark:border-slate-700">
+                                    <i class="fa-solid fa-inbox text-4xl text-slate-300 dark:text-slate-600"></i>
+                                </div>
+                                <p class="text-lg font-medium washly-shell">ยังไม่มีออเดอร์ในระบบ</p>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showSlip(imageUrl) {
+        const isDark = document.documentElement.classList.contains('dark');
+        Swal.fire({
+            title: 'หลักฐานการโอนเงิน',
+            imageUrl: imageUrl,
+            imageAlt: 'สลิปโอนเงิน',
+            confirmButtonText: 'ปิดหน้าต่าง',
+            confirmButtonColor: '#0ea5e9', // sky-500
+            background: isDark ? '#1e293b' : '#ffffff',
+            color: isDark ? '#f8fafc' : '#1e293b',
+            customClass: {
+                popup: 'rounded-3xl',
+                image: 'rounded-xl max-h-[60vh] object-contain border border-slate-200 dark:border-slate-700'
+            }
+        });
+    }
+
+    function confirmRejectSlip(form) {
+        const isDark = document.documentElement.classList.contains('dark');
+        Swal.fire({
+            title: 'ปฏิเสธสลิปใบนี้?',
+            text: "ลูกค้าจะต้องอัปโหลดสลิปเข้ามาใหม่",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'ใช่, ปฏิเสธ',
+            cancelButtonText: 'ยกเลิก',
+            background: isDark ? '#1e293b' : '#ffffff',
+            color: isDark ? '#f8fafc' : '#1e293b',
+            customClass: { popup: 'rounded-3xl' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        })
+    }
+</script>
 @endsection

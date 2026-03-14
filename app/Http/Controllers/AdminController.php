@@ -160,9 +160,14 @@ class AdminController extends Controller
     // 2. 🚨 เพิ่มฟังก์ชันใหม่: หน้าจัดการออเดอร์แบบเต็มๆ
     public function manageOrders()
     {
-        // ดึงข้อมูลออเดอร์ทั้งหมด พร้อมข้อมูลลูกค้าและแพ็กเกจ (เรียงจากใหม่ไปเก่า)
+        // ... (โค้ดดึงออเดอร์ของซีเหมือนเดิม)
         $orders = Order::with(['user', 'package'])->orderBy('created_at', 'desc')->get();
-        return view('admin.orders', compact('orders'));
+
+        // 👇 เพิ่มบรรทัดนี้: ดึงรายชื่อพนักงานขับรถทั้งหมดไปแสดงใน Dropdown เลือกคนขับ
+        $drivers = User::where('role', 'driver')->get();
+
+        // อย่าลืมส่งตัวแปร $drivers ไปด้วยนะ
+        return view('admin.orders', compact('orders', 'drivers'));
     }
 
     public function settings(AppSettingService $appSettingService)
@@ -700,5 +705,80 @@ class AdminController extends Controller
 
         $staff->delete();
         return redirect()->route('admin.staff.index')->with('success', 'ลบข้อมูลพนักงานออกจากระบบแล้ว 🗑️');
+    }
+    // ==========================================
+    // 🛵 ระบบจัดการคนขับรถ (Driver)
+    // ==========================================
+    public function drivers()
+    {
+        // ดึงเฉพาะคนที่มี Role เป็น driver
+        $drivers = User::where('role', 'driver')->orderBy('created_at', 'desc')->get();
+        return view('admin.drivers', compact('drivers'));
+    }
+
+    public function storeDriver(Request $request)
+    {
+        $request->validate([
+            'fullname' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username',
+            'password' => 'required|string|min:8',
+            'phone' => 'nullable|string|max:20',
+        ]);
+
+        User::create([
+            'fullname' => $request->fullname,
+            'username' => $request->username,
+            'password' => Hash::make($request->password),
+            'phone' => $request->phone,
+            'role' => 'driver', // ล็อกตำแหน่งเป็น driver
+        ]);
+
+        return back()->with('success', 'เพิ่มพนักงานขับรถสำเร็จ!');
+    }
+
+    public function updateDriver(Request $request, $id)
+    {
+        $driver = User::where('role', 'driver')->findOrFail($id);
+
+        $request->validate([
+            'fullname' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username,' . $id,
+            'password' => 'nullable|string|min:8',
+            'phone' => 'nullable|string|max:20',
+        ]);
+
+        $driver->fullname = $request->fullname;
+        $driver->username = $request->username;
+        $driver->phone = $request->phone;
+
+        if ($request->filled('password')) {
+            $driver->password = Hash::make($request->password);
+        }
+
+        $driver->save();
+
+        return back()->with('success', 'อัปเดตข้อมูลพนักงานขับรถสำเร็จ!');
+    }
+
+    public function destroyDriver($id)
+    {
+        $driver = User::where('role', 'driver')->findOrFail($id);
+        $driver->delete();
+        return back()->with('success', 'ลบพนักงานขับรถเรียบร้อยแล้ว!');
+    }
+
+    // ==========================================
+    // 🚚 แอดมินจ่ายงานให้คนขับ
+    // ==========================================
+    public function assignDriver(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+        $request->validate(['driver_id' => 'required|exists:users,id']);
+
+        $order->driver_id = $request->driver_id;
+        $order->status = 'picking_up'; // มอบหมายปุ๊บ ให้ถือว่ากำลังไปรับเลย
+        $order->save();
+
+        return back()->with('success', 'มอบหมายงานให้พนักงานขับรถสำเร็จ!');
     }
 }

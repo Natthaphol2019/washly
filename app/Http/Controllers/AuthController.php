@@ -104,9 +104,12 @@ class AuthController extends Controller
 
             if (in_array($user->role, ['admin', 'staff'], true)) {
                 $request->session()->regenerate();
-
                 return redirect()->route('admin.dashboard')->with('success', 'เข้าสู่ระบบหลังบ้านสำเร็จ');
+            } elseif ($user->role === 'driver') {
+                $request->session()->regenerate();
+                return redirect()->route('driver.dashboard')->with('success', 'เข้าสู่ระบบคนขับสำเร็จ พร้อมลุยงาน!');
             }
+                // ถ้าเป็นลูกค้าหรือใครที่ไม่ใช่แอดมิน แอบมาเข้าประตูนี้ เตะออก!  
 
             Auth::logout();
 

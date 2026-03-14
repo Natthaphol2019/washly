@@ -46,39 +46,41 @@
 
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
                 <a href="{{ route('admin.dashboard') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {{ request()->routeIs('admin.main') || request()->routeIs('admin.dashboard') ? 'washly-brand-btn text-white shadow-lg shadow-sky-400/30' : 'hover:bg-slate-800 hover:text-white' }}">
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {{ request()->routeIs('admin.main') || request()->routeIs('admin.dashboard') ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30' : 'hover:bg-slate-800 hover:text-white' }}">
                     <i class="fa-solid fa-house w-5 text-center"></i>
-                    <span class="font-medium">รายงานสรุปภาพรวม</span>
+                    <span class="font-medium">รายงานสรุป</span>
                 </a>
 
                 <a href="{{ route('admin.orders.index') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {{ request()->routeIs('admin.orders.*') ? 'washly-brand-btn text-white shadow-lg shadow-sky-400/30' : 'hover:bg-slate-800 hover:text-white' }}">
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {{ request()->routeIs('admin.orders.*') ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30' : 'hover:bg-slate-800 hover:text-white' }}">
                     <i class="fa-solid fa-list-check w-5 text-center"></i>
                     <span class="font-medium">จัดการออเดอร์</span>
                 </a>
 
                 <a href="{{ route('admin.packages.index') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {{ request()->routeIs('admin.packages.*') ? 'washly-brand-btn text-white shadow-lg shadow-sky-400/30' : 'hover:bg-slate-800 hover:text-white' }}">
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {{ request()->routeIs('admin.packages.*') ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30' : 'hover:bg-slate-800 hover:text-white' }}">
                     <i class="fa-solid fa-boxes-stacked w-5 text-center"></i>
-                    <span class="font-medium">แพ็กเกจและเมนูเสริม</span>
+                    <span class="font-medium">แพ็กเกจ/เมนูเสริม</span>
                 </a>
+                
                 <a href="{{ route('admin.customers.index') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {{ request()->routeIs('admin.customers.*') ? 'washly-brand-btn text-white shadow-lg shadow-sky-400/30' : 'hover:bg-slate-800 hover:text-white' }}">
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {{ request()->routeIs('admin.customers.*') ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30' : 'hover:bg-slate-800 hover:text-white' }}">
                     <i class="fa-solid fa-users w-5 text-center"></i>
                     <span class="font-medium">จัดการลูกค้า</span>
                 </a>
 
                 <a href="{{ route('admin.staff.index') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {{ request()->routeIs('admin.staff.*') ? 'washly-brand-btn text-white shadow-lg shadow-sky-400/30' : 'hover:bg-slate-800 hover:text-white' }}">
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {{ request()->routeIs('admin.staff.*') ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30' : 'hover:bg-slate-800 hover:text-white' }}">
                     <i class="fa-solid fa-user-tie w-5 text-center"></i>
                     <span class="font-medium">จัดการพนักงาน</span>
                 </a>
 
-                {{-- <a href="{{ route('admin.settings.index') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {{ request()->routeIs('admin.settings.*') ? 'washly-brand-btn text-white shadow-lg shadow-sky-400/30' : 'hover:bg-slate-800 hover:text-white' }}">
-                    <i class="fa-solid fa-sliders w-5 text-center"></i>
-                    <span class="font-medium">ตั้งค่าระบบจัดส่ง</span>
-                </a> --}}
+                {{-- 👇 เมนูใหม่สำหรับคนขับ --}}
+                <a href="{{ route('admin.drivers.index') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors {{ request()->routeIs('admin.drivers.*') ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30' : 'hover:bg-slate-800 hover:text-white' }}">
+                    <i class="fa-solid fa-motorcycle w-5 text-center"></i>
+                    <span class="font-medium">จัดการคนขับรถ</span>
+                </a>
             </nav>
 
             <div class="p-4 border-t border-slate-800 bg-slate-900/50">
@@ -105,8 +107,11 @@
                         class="md:hidden text-gray-500 dark:text-gray-400 hover:text-sky-600 focus:outline-none p-2 rounded-lg bg-gray-50 dark:bg-slate-700">
                         <i class="fa-solid fa-bars text-xl"></i>
                     </button>
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2">
-                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Dashboard</span>
+                    {{-- 👇 แก้ตรงนี้ให้รับชื่อหน้าแบบไดนามิก --}}
+                    <a href="{{ url()->current() }}" class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            @yield('page_title', 'Dashboard')
+                        </span>
                     </a>
                 </div>
 

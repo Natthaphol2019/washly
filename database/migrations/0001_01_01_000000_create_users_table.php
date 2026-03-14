@@ -21,7 +21,7 @@ return new class extends Migration {
             $table->string('latitude')->nullable();
             $table->string('longitude')->nullable();
             $table->string('map_link')->nullable(); // เผื่อให้ลูกค้าแปะลิงก์
-            $table->enum('role', ['admin', 'customer'])->default('customer');
+            $table->enum('role', ['admin', 'customer', 'driver'])->default('customer');
             $table->rememberToken();
             $table->timestamps();
         });

@@ -8,8 +8,14 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
+    
     public function run(): void
     {
+        $this->call([
+            TimeSlotSeeder::class,     // ดึงข้อมูลรอบเวลา
+            PackageSeeder::class,      // ดึงข้อมูลแพ็กเกจ
+            AddonOptionSeeder::class,  // ดึงข้อมูลเมนูเสริม/น้ำยาซักผ้า
+        ]);
         // 👑 สร้างบัญชี แอดมิน (Admin)
         User::create([
             'fullname' => 'ผู้ดูแลระบบ',

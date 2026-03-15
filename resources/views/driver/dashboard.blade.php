@@ -84,11 +84,40 @@
                                             <p class="text-[10px] lg:text-xs text-gray-600 dark:text-gray-400 mt-1"><i class="fa-solid fa-phone text-emerald-500 mr-1"></i>{{ $order->user->phone }}</p>
                                         @endif
                                         <p class="text-[10px] lg:text-xs text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed"><i class="fa-solid fa-location-crosshairs text-rose-500 mr-1"></i>{{ $order->pickup_address ?? $order->user->address }}</p>
-                                        
-                                        @if($order->pickup_map_link)
-                                            <a href="{{ $order->pickup_map_link }}" target="_blank" class="mt-2 inline-flex items-center gap-1 text-[10px] lg:text-[11px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-md border border-blue-100 dark:border-blue-800/50 transition">
+
+                                        @php
+                                            // สร้าง Google Maps Direction Link (เหมือนที่ Admin ใช้)
+                                            $shopLat = config('washly.shop.latitude', env('SHOP_LATITUDE'));
+                                            $shopLng = config('washly.shop.longitude', env('SHOP_LONGITUDE'));
+                                            
+                                            $destinationLat = $order->pickup_latitude ?? $order->user->latitude;
+                                            $destinationLng = $order->pickup_longitude ?? $order->user->longitude;
+                                            
+                                            $mapLink = null;
+                                            
+                                            // ถ้ามีพิกัดทั้งต้นทางและปลายทาง ใช้ Direction API
+                                            if ($shopLat && $shopLng && $destinationLat && $destinationLng) {
+                                                $mapLink = "https://www.google.com/maps/dir/?api=1&origin={$shopLat},{$shopLng}&destination={$destinationLat},{$destinationLng}&travelmode=driving";
+                                            } elseif ($destinationLat && $destinationLng) {
+                                                // ถ้ามีแค่ปลายทาง ให้เปิดแผนที่ไปที่พิกัดนั้น
+                                                $mapLink = "https://maps.google.com/?q={$destinationLat},{$destinationLng}";
+                                            } else {
+                                                // ถ้าไม่มีพิกัดเลย ใช้ที่อยู่แทน
+                                                $address = $order->pickup_address ?? $order->user->address;
+                                                if ($address) {
+                                                    $mapLink = "https://maps.google.com/?q=" . urlencode($address);
+                                                }
+                                            }
+                                        @endphp
+
+                                        @if($mapLink)
+                                            <a href="{{ $mapLink }}" target="_blank" class="mt-2 inline-flex items-center gap-1 text-[10px] lg:text-[11px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-md border border-blue-100 dark:border-blue-800/50 transition">
                                                 <i class="fa-solid fa-map-location-dot"></i> แผนที่นำทาง
                                             </a>
+                                        @else
+                                            <span class="mt-2 inline-flex items-center gap-1 text-[10px] lg:text-[11px] text-gray-400 bg-gray-100 dark:bg-slate-700 px-2 py-1 lg:px-2.5 lg:py-1.5 rounded-md font-bold">
+                                                <i class="fa-solid fa-map"></i> ไม่มีที่อยู่
+                                            </span>
                                         @endif
                                     </td>
 

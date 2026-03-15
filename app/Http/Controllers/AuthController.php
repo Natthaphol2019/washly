@@ -87,8 +87,7 @@ class AuthController extends Controller
 
     public function showAdminLogin(Request $request)
     {
-        $request->session()->regenerateToken();
-
+        // ไม่ต้อง regenerateToken ที่นี่ เพราะจะทำให้ token เก่าใช้ไม่ได้
         return view('admin.login');
     }
 
@@ -103,14 +102,19 @@ class AuthController extends Controller
             $user = Auth::user();
 
             if (in_array($user->role, ['admin', 'staff'], true)) {
+                // Regenerate session เพื่อความปลอดภัย
                 $request->session()->regenerate();
-                return redirect()->route('admin.dashboard')->with('success', 'เข้าสู่ระบบหลังบ้านสำเร็จ');
+                
+                return redirect()->intended(route('admin.dashboard'))
+                    ->with('success', 'เข้าสู่ระบบหลังบ้านสำเร็จ');
             } elseif ($user->role === 'driver') {
                 $request->session()->regenerate();
-                return redirect()->route('driver.dashboard')->with('success', 'เข้าสู่ระบบคนขับสำเร็จ พร้อมลุยงาน!');
+                
+                return redirect()->intended(route('driver.dashboard'))
+                    ->with('success', 'เข้าสู่ระบบคนขับสำเร็จ พร้อมลุยงาน!');
             }
-                // ถ้าเป็นลูกค้าหรือใครที่ไม่ใช่แอดมิน แอบมาเข้าประตูนี้ เตะออก!  
-
+            
+            // ถ้าเป็นลูกค้าหรือใครที่ไม่ใช่แอดมิน แอบมาเข้าประตูนี้ เตะออก!
             Auth::logout();
 
             return back()->withErrors([

@@ -143,5 +143,6 @@
         initThemeToggle('theme-toggle-desktop', 'theme-toggle-dark-icon-desktop', 'theme-toggle-light-icon-desktop');
         initThemeToggle('theme-toggle-mobile', 'theme-toggle-dark-icon-mobile', 'theme-toggle-light-icon-mobile');
     </script>
+    @stack('scripts')
 </body>
 </html>

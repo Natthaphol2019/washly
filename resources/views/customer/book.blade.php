@@ -101,7 +101,7 @@
                     </div>
 
                     {{-- 2. เลือกน้ำยาและบริการเสริม --}}
-                    <!-- <div class="rounded-3xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 md:p-8 shadow-sm">
+                    <div class="rounded-3xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 md:p-8 shadow-sm">
                         <div class="flex items-center gap-4 mb-6">
                             <div class="shrink-0 bg-gradient-to-br from-pink-400 to-pink-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-md text-lg">2</div>
                             <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">เลือกน้ำยาและบริการเสริม</h3>
@@ -227,7 +227,7 @@
                                     </div>
                                 </div>
 
-                                <div class="pt-6 border-t border-gray-100 dark:border-slate-700 mt-6">
+                                {{-- <div class="pt-6 border-t border-gray-100 dark:border-slate-700 mt-6">
                                     <div class="flex items-center gap-2 mb-4">
                                         <i class="fa-solid fa-sparkles text-xl text-amber-400"></i>
                                         <h4 class="text-lg font-bold text-gray-800 dark:text-gray-100">บริการเสริมอื่นๆ</h4>
@@ -269,10 +269,10 @@
                                             </div>
                                         @endforeach
                                     </div>
-                                </div>
+                                </div> --}}
                             </div>
                         </div>
-                    </div> -->
+                    </div> 
 
                     {{-- 🌟 3. วันที่และรอบเวลา (ดีไซน์ใหม่) --}}
                     <div class="rounded-3xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 md:p-8 shadow-sm">
@@ -647,7 +647,6 @@
         } else {
             // ✅ ส่วนที่เกินจาก 1.5 กม. 
             // ตัวอย่าง: 2.4 กม. -> เกินมา 0.9 กม. -> Math.ceil(0.9) = 1 -> 1 * 20 = 20 บาท
-            // ตัวอย่าง: 2.6 กม. -> เกินมา 1.1 กม. -> Math.ceil(1.1) = 2 -> 2 * 20 = 40 บาท
             let extraDistance = deliveryDistance - 1.5;
             deliveryFee = Math.ceil(extraDistance) * 20;
             deliveryText = `฿${deliveryFee.toLocaleString()} (${deliveryDistance} กม.)`;

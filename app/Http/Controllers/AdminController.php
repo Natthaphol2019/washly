@@ -243,7 +243,7 @@ class AdminController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,picked_up,processing,delivering,completed,cancelled'
+            'status' => 'required|in:pending,picking_up,picked_up,processing,delivering,completed,cancelled'
         ]);
 
         $order = Order::findOrFail($id);
@@ -269,6 +269,7 @@ class AdminController extends Controller
 
             $statusLabels = [
                 'pending' => 'รอรับผ้า',
+                'picking_up' => 'กำลังรับผ้า',
                 'picked_up' => 'รับผ้าแล้ว',
                 'processing' => 'กำลังซัก/อบ',
                 'delivering' => 'กำลังนำส่ง',
@@ -603,32 +604,32 @@ class AdminController extends Controller
     }
 
     public function updateCustomer(Request $request, $id)
-{
-    $customer = User::where('role', 'customer')->findOrFail($id);
-    
-    $request->validate([
-        'fullname' => 'required|string|max:255',
-        'username' => 'required|string|max:255|unique:users,username,' . $customer->id,
-        'phone' => 'nullable|string|max:20',
-        'address' => 'nullable|string',
-        // 👇 เพิ่มกฎตรวจสอบระยะทางให้เป็นตัวเลขและห้ามติดลบ
-        'delivery_distance' => 'nullable|numeric|min:0', 
-    ]);
+    {
+        $customer = User::where('role', 'customer')->findOrFail($id);
 
-    $customer->fullname = $request->fullname;
-    $customer->username = $request->username;
-    $customer->phone = $request->phone;
-    $customer->address = $request->address;
-    $customer->delivery_distance = $request->delivery_distance; // บันทึกระยะทาง
+        $request->validate([
+            'fullname' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username,' . $customer->id,
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+            // 👇 เพิ่มกฎตรวจสอบระยะทางให้เป็นตัวเลขและห้ามติดลบ
+            'delivery_distance' => 'nullable|numeric|min:0',
+        ]);
 
-    if ($request->filled('password')) {
-        $customer->password = Hash::make($request->password);
+        $customer->fullname = $request->fullname;
+        $customer->username = $request->username;
+        $customer->phone = $request->phone;
+        $customer->address = $request->address;
+        $customer->delivery_distance = $request->delivery_distance; // บันทึกระยะทาง
+
+        if ($request->filled('password')) {
+            $customer->password = Hash::make($request->password);
+        }
+
+        $customer->save(); // เซฟรอบเดียวจบ
+
+        return redirect()->route('admin.customers.index')->with('success', 'อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว!');
     }
-    
-    $customer->save(); // เซฟรอบเดียวจบ
-
-    return redirect()->route('admin.customers.index')->with('success', 'อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว!');
-}
 
     public function destroyCustomer($id)
     {

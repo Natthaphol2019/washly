@@ -74,12 +74,24 @@
                                         {{ $order->user->phone ?? '-' }}</p>
 
                                     @if ($order->pickup_latitude && $order->pickup_longitude)
+                                        @php
+                                            $shopLat = config('washly.shop.latitude', env('SHOP_LATITUDE'));
+                                            $shopLng = config('washly.shop.longitude', env('SHOP_LONGITUDE'));
+                                        @endphp
                                         <div class="mt-2">
-                                            <a href="https://www.google.com/maps/dir/?api=1&origin={{ env('SHOP_LATITUDE') }},{{ env('SHOP_LONGITUDE') }}&destination={{ $order->pickup_latitude }},{{ $order->pickup_longitude }}&travelmode=driving"
-                                                target="_blank"
-                                                class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-400 px-3 py-1.5 rounded-lg text-[11px] font-medium transition">
-                                                <i class="fa-solid fa-map-location-dot"></i> นำทางไปรับ
-                                            </a>
+                                            @if($shopLat && $shopLng)
+                                                <a href="https://www.google.com/maps/dir/?api=1&origin={{ $shopLat }},{{ $shopLng }}&destination={{ $order->pickup_latitude }},{{ $order->pickup_longitude }}&travelmode=driving"
+                                                    target="_blank"
+                                                    class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-400 px-3 py-1.5 rounded-lg text-[11px] font-medium transition">
+                                                    <i class="fa-solid fa-map-location-dot"></i> นำทางไปรับ
+                                                </a>
+                                            @elseif($order->pickup_latitude && $order->pickup_longitude)
+                                                <a href="https://maps.google.com/?q={{ $order->pickup_latitude }},{{ $order->pickup_longitude }}"
+                                                    target="_blank"
+                                                    class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-400 px-3 py-1.5 rounded-lg text-[11px] font-medium transition">
+                                                    <i class="fa-solid fa-map-location-dot"></i> แผนที่
+                                                </a>
+                                            @endif
                                         </div>
                                     @endif
                                 </td>

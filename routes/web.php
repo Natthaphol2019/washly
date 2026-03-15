@@ -104,12 +104,17 @@ Route::middleware('auth')->group(function () {
     // ------------------------------------------
     Route::prefix('driver')->middleware('role.driver')->group(function () {
         Route::get('/dashboard', [DriverController::class, 'index'])->name('driver.dashboard');
-        
+
         // ออเดอร์
         Route::post('/orders/{id}/accept', [DriverController::class, 'acceptJob'])->name('driver.orders.accept');
         Route::put('/orders/{id}/status', [DriverController::class, 'updateStatus'])->name('driver.orders.status');
         Route::post('/orders/{id}/cancel', [DriverController::class, 'cancelOrder'])->name('driver.orders.cancel');
         
+        // การชำระเงิน (Driver สามารถอนุมัติ/ปฏิเสธสลิปได้)
+        Route::post('/orders/{id}/approve-payment', [DriverController::class, 'approvePayment'])->name('driver.orders.approve_payment');
+        Route::post('/orders/{id}/confirm-cash', [DriverController::class, 'confirmCashPayment'])->name('driver.orders.confirm_cash');
+        Route::post('/orders/{id}/reject-slip', [DriverController::class, 'rejectSlip'])->name('driver.orders.reject_slip');
+
         Route::get('/history', [DriverController::class, 'history'])->name('driver.history');
         Route::get('/profile', [DriverController::class, 'profile'])->name('driver.profile');
         Route::put('/profile', [DriverController::class, 'updateProfile'])->name('driver.profile.update');

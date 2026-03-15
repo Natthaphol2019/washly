@@ -20,9 +20,55 @@ class DriverController extends Controller
         $myOrders = Order::with(['user', 'package'])
             ->where('driver_id', Auth::id())
             ->whereNotIn('status', ['completed', 'cancelled'])
-            ->orderBy('created_at', 'asc')->get();
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function ($order) {
+                // เพิ่ม map_link ให้แต่ละออเดอร์ (ถ้ายังไม่มี)
+                if (!$order->pickup_map_link || strpos($order->pickup_map_link, '?q=,') !== false) {
+                    $order->pickup_map_link = $order->map_link;
+                }
+                return $order;
+            });
 
         return view('driver.dashboard', compact('myOrders'));
+    }
+
+    // ==========================================
+    // ✅ ไรเดอร์รับงาน (Accept Job)
+    // ==========================================
+    public function acceptJob($id)
+    {
+        $order = Order::findOrFail($id);
+
+        if ($order->driver_id !== Auth::id()) {
+            return back()->with('error', 'คุณไม่สามารถรับออเดอร์นี้ได้ครับ');
+        }
+
+        if (!in_array($order->status, ['pending', 'pending_pickup'])) {
+            return back()->with('error', 'ออเดอร์นี้อยู่ในสถานะที่ไม่สามารถรับงานได้');
+        }
+
+        $oldStatus = $order->status;
+        $order->status = 'picking_up';
+        $order->save();
+
+        OrderLog::create([
+            'order_id' => $order->id,
+            'user_id' => Auth::id(),
+            'old_status' => $oldStatus,
+            'new_status' => 'picking_up'
+        ]);
+
+        if ($order->user) {
+            $order->user->notify(new SystemNotification(
+                'ไรเดอร์รับงานแล้ว 🛵',
+                'ออเดอร์ ' . $order->order_number . ' ไรเดอร์กำลังเดินทางไปรับผ้าของคุณครับ',
+                route('customer.orders'),
+                'info'
+            ));
+        }
+
+        return back()->with('success', 'รับงานสำเร็จ! กำลังเดินทางไปรับผ้าครับ');
     }
 
     // ==========================================

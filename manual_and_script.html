@@ -307,6 +307,363 @@
                 ขอบคุณทุกท่านที่รับฟังครับ ในช่วงเวลาที่เหลือนี้ ท่านใดมีข้อสงสัยหรือคำถามเกี่ยวกับระบบ Washly สามารถสอบถามได้เลยครับ ยินดีครับ"
             </div>
         </div>
+
+        <!-- Section: API Documentation -->
+        <div class="card">
+            <h2><span>🔌</span> API Endpoints (RESTful API)</h2>
+            <p>เอกสาร API สำหรับนักพัฒนาที่ต้องการเชื่อมต่อระบบ Washly กับแอปพลิเคชันภายนอก</p>
+
+            <h3>📋 สารบัญ API</h3>
+            <ul>
+                <li><a href="#api-auth" class="highlight">Authentication (การยืนยันตัวตน)</a></li>
+                <li><a href="#api-customer" class="highlight">Customer API (ลูกค้า)</a></li>
+                <li><a href="#api-admin" class="highlight">Admin API (ผู้ดูแลระบบ)</a></li>
+                <li><a href="#api-driver" class="highlight">Driver API (พนักงานขับรถ)</a></li>
+                <li><a href="#api-notification" class="highlight">Notification API (การแจ้งเตือน)</a></li>
+            </ul>
+
+            <!-- Authentication -->
+            <h3 id="api-auth">🔐 Authentication API</h3>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #28a745;">POST /login</h4>
+                <p><strong>คำอธิบาย:</strong> เข้าสู่ระบบสำหรับลูกค้า</p>
+                <p><strong>Request Body:</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "username": "string (required)",
+  "password": "string (required)"
+}</code></pre>
+                <p><strong>Response (Success - 200):</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "success": true,
+  "message": "เข้าสู่ระบบสำเร็จ ยินดีต้อนรับกลับมาครับ",
+  "redirect": "/customer/main"
+}</code></pre>
+                <p><strong>Response (Error - 422):</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "success": false,
+  "errors": {
+    "username": ["ชื่อผู้ใช้งาน หรือ รหัสผ่าน ไม่ถูกต้องนะ! 🥺"]
+  }
+}</code></pre>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #28a745;">POST /register</h4>
+                <p><strong>คำอธิบาย:</strong> สมัครสมาชิกใหม่</p>
+                <p><strong>Request Body:</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "fullname": "string (required)",
+  "username": "string (required, unique)",
+  "phone": "string (required)",
+  "address": "string (required)",
+  "latitude": "number (optional)",
+  "longitude": "number (optional)",
+  "password": "string (required, min: 8)",
+  "password_confirmation": "string (required)"
+}</code></pre>
+                <p><strong>Response (Success - 200):</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "success": true,
+  "message": "สมัครสมาชิกสำเร็จ! ยินดีต้อนรับครับ",
+  "redirect": "/"
+}</code></pre>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #dc3545;">POST /logout</h4>
+                <p><strong>คำอธิบาย:</strong> ออกจากระบบ</p>
+                <p><strong>Headers:</strong> <code>Authorization: Bearer {token}</code></p>
+                <p><strong>Response (Success - 200):</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "success": true,
+  "message": "ออกจากระบบเรียบร้อยแล้ว",
+  "redirect": "/login"
+}</code></pre>
+            </div>
+
+            <!-- Customer API -->
+            <h3 id="api-customer">👤 Customer API</h3>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #007bff;">GET /customer/book</h4>
+                <p><strong>คำอธิบาย:</strong> แสดงหน้าฟอร์มจองคิว</p>
+                <p><strong>Headers:</strong> <code>Authorization: Bearer {token}</code></p>
+                <p><strong>Response Data:</strong></p>
+                <ul>
+                    <li><code>packages</code> - รายการแพ็กเกจบริการ</li>
+                    <li><code>timeSlots</code> - ช่วงเวลาที่สามารถจองได้</li>
+                    <li><code>addons</code> - บริการเสริม (น้ำยาซัก, น้ำยาปรับผ้านุ่ม, ฯลฯ)</li>
+                    <li><code>todayQueues</code> - คิวจองวันนี้</li>
+                    <li><code>tomorrowQueues</code> - คิวจองพรุ่งนี้</li>
+                </ul>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #28a745;">POST /customer/book</h4>
+                <p><strong>คำอธิบาย:</strong> สร้างการจองคิวใหม่</p>
+                <p><strong>Request Body:</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "pickup_date": "today|tomorrow (required)",
+  "package_id": "integer (required)",
+  "time_slot_id": "integer (required)",
+  "pickup_address": "string (required)",
+  "latitude": "number (optional)",
+  "longitude": "number (optional)",
+  "payment_method": "transfer|cash (required)",
+  "customer_note": "string (optional)",
+  "use_customer_detergent": "boolean (optional)",
+  "use_customer_softener": "boolean (optional)",
+  "addons": [
+    {
+      "code": "string",
+      "qty": "integer (1-10)"
+    }
+  ],
+  "extra_dry_qty": {
+    "package_id": "integer"
+  }
+}</code></pre>
+                <p><strong>Response (Success - 200):</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "success": true,
+  "message": "จองคิวสำเร็จ! หมายเลขออเดอร์ของคุณคือ ORD-20260315-3009",
+  "order_number": "ORD-20260315-3009",
+  "redirect": "/customer/main"
+}</code></pre>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #007bff;">GET /customer/orders</h4>
+                <p><strong>คำอธิบาย:</strong> ดูประวัติออเดอร์ทั้งหมดของลูกค้า</p>
+                <p><strong>Headers:</strong> <code>Authorization: Bearer {token}</code></p>
+                <p><strong>Response:</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "orders": [
+    {
+      "id": 1,
+      "order_number": "ORD-20260315-3009",
+      "package": { "name": "ซัก-อบ 9-10 kg", "price": 150 },
+      "status": "pending",
+      "payment_status": "unpaid",
+      "payment_method": "transfer",
+      "total_price": 180,
+      "created_at": "2026-03-15T10:30:00Z"
+    }
+  ]
+}</code></pre>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #28a745;">POST /customer/orders/{id}/pay</h4>
+                <p><strong>คำอธิบาย:</strong> อัปโหลดสลิปโอนเงิน</p>
+                <p><strong>Content-Type:</strong> <code>multipart/form-data</code></p>
+                <p><strong>Request Body:</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "slip": "file (required, image, max: 5MB)"
+}</code></pre>
+                <p><strong>Response (Success - 200):</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "success": true,
+  "message": "อัปโหลดสลิปสำเร็จ! รอแอดมินตรวจสอบยอดเงินสักครู่นะครับ 💸"
+}</code></pre>
+            </div>
+
+            <!-- Admin API -->
+            <h3 id="api-admin">👑 Admin API</h3>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #007bff;">GET /admin/orders</h4>
+                <p><strong>คำอธิบาย:</strong> ดูรายการออเดอร์ทั้งหมด (สำหรับ Admin/Staff)</p>
+                <p><strong>Headers:</strong> <code>Authorization: Bearer {token}</code></p>
+                <p><strong>Middleware:</strong> <code>role.admin_or_staff</code></p>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #28a745;">POST /admin/orders/{id}/assign-driver</h4>
+                <p><strong>คำอธิบาย:</strong> มอบหมายงานให้พนักงานขับรถ</p>
+                <p><strong>Request Body:</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "driver_id": "integer (required)"
+}</code></pre>
+                <p><strong>Response (Success - 200):</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "success": true,
+  "message": "มอบหมายงานให้พนักงานขับรถสำเร็จ!"
+}</code></pre>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #28a745;">POST /admin/orders/{id}/approve-payment</h4>
+                <p><strong>คำอธิบาย:</strong> อนุมัติการชำระเงิน (สลิปโอนเงิน)</p>
+                <p><strong>Response (Success - 200):</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "success": true,
+  "message": "อนุมัติสลิปสำเร็จ! ✅"
+}</code></pre>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #dc3545;">POST /admin/orders/{id}/reject-slip</h4>
+                <p><strong>คำอธิบาย:</strong> ปฏิเสธสลิปโอนเงิน</p>
+                <p><strong>Response (Success - 200):</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "success": true,
+  "message": "ปฏิเสธสลิปแล้ว ลูกค้าต้องอัปโหลดใหม่ 🔄"
+}</code></pre>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #28a745;">PUT /admin/orders/{id}/status</h4>
+                <p><strong>คำอธิบาย:</strong> อัปเดตสถานะออเดอร์</p>
+                <p><strong>Request Body:</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "status": "pending|pending_pickup|picking_up|processing|washing_completed|delivering|completed (required)"
+}</code></pre>
+            </div>
+
+            <!-- Driver API -->
+            <h3 id="api-driver">🛵 Driver API</h3>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #007bff;">GET /driver/dashboard</h4>
+                <p><strong>คำอธิบาย:</strong> ดูรายการงานที่ฉันรับไว้</p>
+                <p><strong>Headers:</strong> <code>Authorization: Bearer {token}</code></p>
+                <p><strong>Middleware:</strong> <code>role.driver</code></p>
+                <p><strong>Response Data:</strong></p>
+                <ul>
+                    <li><code>myOrders</code> - รายการงานที่กำลังดำเนินการ</li>
+                </ul>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #28a745;">PUT /driver/orders/{id}/status</h4>
+                <p><strong>คำอธิบาย:</strong> อัปเดตสถานะการทำงาน (ไรเดอร์)</p>
+                <p><strong>Request Body:</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "status": "pending_pickup|picking_up|processing|washing_completed|delivering|completed (required)"
+}</code></pre>
+                <p><strong>Response (Success - 200):</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "success": true,
+  "message": "อัปเดตสถานะเป็น 'กำลังไปรับ' สำเร็จ!"
+}</code></pre>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #28a745;">POST /driver/orders/{id}/approve-payment</h4>
+                <p><strong>คำอธิบาย:</strong> อนุมัติการชำระเงิน (ไรเดอร์สามารถอนุมัติสลิปได้)</p>
+                <p><strong>Response (Success - 200):</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "success": true,
+  "message": "อนุมัติสลิปสำเร็จ! ✅"
+}</code></pre>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #dc3545;">POST /driver/orders/{id}/cancel</h4>
+                <p><strong>คำอธิบาย:</strong> ยกเลิกงาน (ไรเดอร์)</p>
+                <p><strong>Request Body:</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "cancel_reason": "string (required, max: 1000)"
+}</code></pre>
+                <p><strong>Response (Success - 200):</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "success": true,
+  "message": "ยกเลิกออเดอร์เรียบร้อยแล้ว"
+}</code></pre>
+            </div>
+
+            <!-- Notification API -->
+            <h3 id="api-notification">🔔 Notification API</h3>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #007bff;">GET /api/notifications</h4>
+                <p><strong>คำอธิบาย:</strong> ดึงรายการแจ้งเตือนทั้งหมดของผู้ใช้</p>
+                <p><strong>Headers:</strong> <code>Authorization: Bearer {token}</code></p>
+                <p><strong>Response:</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "notifications": [
+    {
+      "id": "uuid",
+      "type": "App\\Notifications\\SystemNotification",
+      "data": {
+        "title": "จองคิวสำเร็จ",
+        "message": "ออเดอร์ ORD-20260315-3009 ถูกสร้างเรียบร้อยแล้ว",
+        "url": "/customer/orders",
+        "level": "success"
+      },
+      "read_at": null,
+      "created_at": "2026-03-15T10:30:00Z"
+    }
+  ]
+}</code></pre>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h4 style="margin-top: 0; color: #28a745;">POST /api/notifications/read-all</h4>
+                <p><strong>คำอธิบาย:</strong> ทำเครื่องหมายว่าอ่านทั้งหมดแล้ว</p>
+                <p><strong>Response (Success - 200):</strong></p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;"><code>{
+  "success": true,
+  "message": "ทำเครื่องหมายว่าอ่านทั้งหมดแล้ว"
+}</code></pre>
+            </div>
+
+            <!-- HTTP Status Codes -->
+            <h3>📊 HTTP Status Codes</h3>
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                <thead>
+                    <tr style="background: #007bff; color: white;">
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Code</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Meaning</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;"><code>200 OK</code></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">สำเร็จ</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;"><code>302 Found</code></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">Redirect (หลังทำรายการสำเร็จ)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;"><code>401 Unauthorized</code></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">ไม่ได้ล็อกอิน หรือ Token หมดอายุ</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;"><code>403 Forbidden</code></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">ไม่มีสิทธิ์เข้าถึง (Role ไม่ตรง)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;"><code>404 Not Found</code></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">ไม่พบข้อมูลที่ร้องขอ</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;"><code>422 Unprocessable Entity</code></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">Validation Error (ข้อมูลไม่ถูกต้อง)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;"><code>500 Internal Server Error</code></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">ข้อผิดพลาดจากเซิร์ฟเวอร์</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Authentication Note -->
+            <h3>🔑 หมายเหตุเกี่ยวกับการ Authentication</h3>
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 15px 0;">
+                <p style="margin: 0;"><strong>⚠️ สำคัญ:</strong> ระบบ Washly ใช้ Session-based Authentication (Laravel Session) ไม่ใช่ Token-based</p>
+                <p style="margin: 10px 0 0 0;">หากต้องการใช้ API จากภายนอก (เช่น Mobile App) แนะนำให้ติดตั้ง <strong>Laravel Sanctum</strong> เพื่อรองรับ API Token Authentication</p>
+            </div>
+
+            <div style="background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px; margin: 15px 0;">
+                <p style="margin: 0;"><strong>💡 Tip:</strong> สามารถทดสอบ API ได้ผ่าน Postman หรือ Insomnia โดยตั้งค่า Headers:</p>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 10px; border-radius: 6px; margin-top: 10px;"><code>Accept: application/json
+Cookie: laravel_session={session_id}</code></pre>
+            </div>
+        </div>
     </div>
 
     <footer>

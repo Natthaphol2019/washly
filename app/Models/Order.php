@@ -29,6 +29,10 @@ class Order extends Model
         'total_price',
     ];
 
+    protected $appends = [
+        'map_link',  // เพิ่ม accessor สำหรับ Google Maps Link
+    ];
+
     protected $casts = [
         'selected_addons' => 'array',
         'use_customer_detergent' => 'boolean',
@@ -59,6 +63,31 @@ class Order extends Model
             ),
             2
         );
+    }
+
+    /**
+     * สร้าง Google Maps Link โดยอัตโนมัติ
+     * ลำดับความสำคัญ: pickup coordinates → user coordinates → address search
+     */
+    public function getMapLinkAttribute(): ?string
+    {
+        // 1. พิกัดจากจุดรับผ้า (Order)
+        if ($this->pickup_latitude && $this->pickup_longitude) {
+            return "https://maps.google.com/?q={$this->pickup_latitude},{$this->pickup_longitude}";
+        }
+
+        // 2. พิกัดจาก User (ลูกค้า)
+        if ($this->user && $this->user->latitude && $this->user->longitude) {
+            return "https://maps.google.com/?q={$this->user->latitude},{$this->user->longitude}";
+        }
+
+        // 3. ใช้ที่อยู่เป็นคำค้นหา
+        $address = $this->pickup_address ?? $this->user->address;
+        if ($address) {
+            return "https://maps.google.com/?q=" . urlencode($address);
+        }
+
+        return null;
     }
 
     // ผูกความสัมพันธ์กับตารางอื่นๆ

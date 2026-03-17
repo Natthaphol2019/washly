@@ -75,9 +75,16 @@
                         </span>
                     @else
                         @if(($order->payment_method ?? 'transfer') === 'transfer' && !$isHistory)
-                            <a href="{{ route('customer.orders.pay', $order->id) }}" class="inline-block bg-pink-500 hover:bg-pink-600 text-white text-[11px] font-bold py-1.5 px-3 rounded-md shadow-sm hover:shadow transition-all">
-                                ชำระเงิน
-                            </a>
+                            <div class="flex flex-col items-end gap-1.5">
+                                <a href="{{ route('customer.orders.pay', $order->id) }}" class="inline-block bg-pink-500 hover:bg-pink-600 text-white text-[11px] font-bold py-1.5 px-3 rounded-md shadow-sm hover:shadow transition-all">
+                                    ชำระเงิน
+                                </a>
+                                <button type="button" 
+                                    onclick="showOrderQRCode({{ $order->id }}, {{ $order->total_price }}, '{{ $order->order_number }}')"
+                                    class="inline-block bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold py-1.5 px-3 rounded-md shadow-sm hover:shadow transition-all flex items-center gap-1">
+                                    <i class="fa-solid fa-qrcode"></i> สแกน QR
+                                </button>
+                            </div>
                         @endif
                     @endif
                 </div>

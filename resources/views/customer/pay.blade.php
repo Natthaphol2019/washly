@@ -15,7 +15,7 @@
         <p class="text-gray-500 dark:text-gray-400 mb-6">หมายเลขออเดอร์: <span class="font-bold text-pink-500">{{ $order->order_number }}</span></p>
 
         <div class="bg-blue-900 rounded-2xl p-6 inline-block mb-6 shadow-inner w-full max-w-[280px]">
-            <img src="https://promptpay.io/1139900420087/{{ $order->total_price }}.png" alt="PromptPay QR Code" class="w-full bg-white rounded-xl p-2">
+            <img src="{{ asset('qr-code/qr-code.jpg') }}" alt="PromptPay QR Code" class="w-full bg-white rounded-xl p-2">
             <p class="text-white mt-4 font-medium"><i class="fa-solid fa-building-columns"></i> บัญชีร้าน Washly</p>
         </div>
 

@@ -485,11 +485,20 @@
                     title: 'เย้! จองคิวสำเร็จ 🎉',
                     text: '{{ session('success_order') }}',
                     icon: 'success',
-                    confirmButtonColor: '#ec4899', 
-                    confirmButtonText: 'รับทราบ',
+                    confirmButtonColor: '#ec4899',
+                    confirmButtonText: 'สแกน QR ชำระเงิน',
+                    denyButtonText: 'ดูออเดอร์ของฉัน',
+                    showDenyButton: true,
                     background: htmlEl.classList.contains('dark') ? '#1e293b' : '#ffffff',
                     color: htmlEl.classList.contains('dark') ? '#f8fafc' : '#1e293b',
                     customClass: { popup: 'rounded-3xl' }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // ไปหน้าออเดอร์เพื่อดู QR Code
+                        window.location.href = '{{ route('customer.orders') }}';
+                    } else if (result.isDenied) {
+                        window.location.href = '{{ route('customer.orders') }}';
+                    }
                 });
             });
         </script>

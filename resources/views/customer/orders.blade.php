@@ -343,6 +343,95 @@
             const isOrderRelated = haystack.includes('ออเดอร์') || haystack.includes('สถานะ') || haystack.includes('ชำระ') || haystack.includes('/customer/orders') || haystack.includes('ไรเดอร์');
             if (isOrderRelated) scheduleRefresh();
         });
+
+        // 💳 ฟังก์ชันแสดง QR Code ชำระเงิน
+        let qrModal = null;
+        
+        function showOrderQRCode(orderId, amount, orderNumber) {
+            if (!qrModal) {
+                qrModal = document.createElement('div');
+                qrModal.id = 'order-qr-modal';
+                qrModal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4';
+                qrModal.innerHTML = `
+                    <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+                        <div class="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 flex items-center justify-between">
+                            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-qrcode"></i> สแกน QR ชำระเงิน
+                            </h3>
+                            <button type="button" onclick="closeOrderQRModal()" class="text-white/80 hover:text-white transition-colors">
+                                <i class="fa-solid fa-xmark text-2xl"></i>
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            <div class="bg-white p-4 rounded-2xl border-2 border-emerald-200 dark:border-slate-600 mb-4 text-center">
+                                <img src="{{ asset('qr-code/qr-code.jpg') }}" alt="QR Code ชำระเงิน" class="w-full max-w-[280px] mx-auto rounded-lg shadow-sm">
+                            </div>
+                            <div class="text-center mb-4">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">ออเดอร์</p>
+                                <p class="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">${orderNumber}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300 mb-1">ยอดชำระ</p>
+                                <p id="order-qr-amount" class="text-3xl font-black text-emerald-600 dark:text-emerald-400">฿${amount.toLocaleString()}</p>
+                            </div>
+                            <div class="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 mb-4">
+                                <p class="text-sm text-emerald-800 dark:text-emerald-200 flex items-start gap-2">
+                                    <i class="fa-solid fa-circle-check mt-0.5"></i>
+                                    <span>สแกน QR ด้วยแอปธนาคารของคุณ เพื่อชำระล่วงหน้า</span>
+                                </p>
+                            </div>
+                            <div class="space-y-3">
+                                <button type="button" onclick="copyOrderAmount(${amount})"
+                                    class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 text-lg">
+                                    <i class="fa-regular fa-copy text-xl"></i>
+                                    <span>คัดลอกยอดเงิน</span>
+                                </button>
+                                <a href="#" onclick="window.location.href='{{ route('customer.orders.pay', '__ORDER_ID__') }}'.replace('__ORDER_ID__', ${orderId}); return false;"
+                                    class="w-full bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 font-bold py-4 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 text-lg">
+                                    <i class="fa-solid fa-upload"></i>
+                                    <span>แนบสลิปโอนเงิน</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(qrModal);
+            }
+            
+            document.getElementById('order-qr-amount').textContent = '฿' + amount.toLocaleString();
+            qrModal.classList.remove('hidden');
+            qrModal.classList.add('flex');
+        }
+        
+        function closeOrderQRModal() {
+            if (qrModal) {
+                qrModal.classList.add('hidden');
+                qrModal.classList.remove('flex');
+            }
+        }
+
+        function copyOrderAmount(amount) {
+            navigator.clipboard.writeText(amount.toString()).then(() => {
+                showToast('คัดลอกยอดเงินแล้ว', 'success');
+            }).catch(() => {
+                showToast('ไม่สามารถคัดลอกได้', 'error');
+            });
+        }
+
+        function showToast(message, type = 'success') {
+            const bgColor = type === 'success' ? 'bg-emerald-500' : 'bg-red-500';
+            const icon = type === 'success' ? 'fa-check' : 'fa-circle-exclamation';
+
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 left-1/2 -translate-x-1/2 ${bgColor} text-white px-6 py-3 rounded-full shadow-lg z-[70] animate-[fadeIn_0.2s_ease-out] flex items-center gap-2 font-semibold`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+        
+        qrModal?.addEventListener('click', function(e) {
+            if (e.target === qrModal) {
+                closeOrderQRModal();
+            }
+        });
     })();
 </script>
 @endpush

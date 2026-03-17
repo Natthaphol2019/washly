@@ -20,21 +20,37 @@
 
     {{-- 📱 & 💻 แถบเมนูด้านบน (Top Navbar) --}}
     <nav class="bg-white dark:bg-slate-800 sticky top-0 z-50 border-b border-slate-200 dark:border-slate-700 shadow-sm transition-colors duration-500">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6"> {{-- เปลี่ยนเป็น max-w-7xl ให้พอดีกับ Content --}}
             <div class="flex justify-between items-center h-16">
                 
-                {{-- โลโก้ --}}
-                <div class="flex items-center gap-3">
-                    <div class="bg-gradient-to-r from-sky-500 to-blue-600 w-10 h-10 rounded-full flex items-center justify-center shadow-md">
-                        <i class="fas fa-motorcycle text-white"></i>
+                {{-- ฝั่งซ้าย: โลโก้ + เมนู Desktop --}}
+                <div class="flex items-center gap-8">
+                    {{-- โลโก้ --}}
+                    <div class="flex items-center gap-3">
+                        <div class="bg-gradient-to-r from-sky-500 to-blue-600 w-10 h-10 rounded-full flex items-center justify-center shadow-md">
+                            <i class="fas fa-motorcycle text-white"></i>
+                        </div>
+                        <div>
+                            <span class="font-black text-lg tracking-wide block leading-tight text-blue-600 dark:text-sky-400">WASHLY</span>
+                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">พนักงานขับรถ</span>
+                        </div>
                     </div>
-                    <div>
-                        <span class="font-black text-lg tracking-wide block leading-tight text-blue-600 dark:text-sky-400">WASHLY</span>
-                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400">พนักงานขับรถ</span>
+
+                    {{-- 💻 เมนูนำทาง (Desktop) โชว์เฉพาะบนจอใหญ่ --}}
+                    <div class="hidden md:flex items-center gap-1">
+                        <a href="{{ route('driver.dashboard') }}" class="px-3 py-2 rounded-lg transition-all flex items-center gap-2 {{ request()->routeIs('driver.dashboard') ? 'bg-blue-50 text-blue-600 dark:bg-slate-700/50 dark:text-sky-400 font-bold' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200 font-medium' }}">
+                            <i class="fas fa-clipboard-list"></i> คิวงาน
+                        </a>
+                        <a href="{{ route('driver.history') }}" class="px-3 py-2 rounded-lg transition-all flex items-center gap-2 {{ request()->routeIs('driver.history') ? 'bg-blue-50 text-blue-600 dark:bg-slate-700/50 dark:text-sky-400 font-bold' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200 font-medium' }}">
+                            <i class="fas fa-history"></i> ประวัติ
+                        </a>
+                        <a href="{{ route('driver.profile') }}" class="px-3 py-2 rounded-lg transition-all flex items-center gap-2 {{ request()->routeIs('driver.profile') ? 'bg-blue-50 text-blue-600 dark:bg-slate-700/50 dark:text-sky-400 font-bold' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200 font-medium' }}">
+                            <i class="fas fa-user-circle"></i> โปรไฟล์
+                        </a>
                     </div>
                 </div>
 
-                {{-- 💻 เมนูฝั่งขวา (Desktop) --}}
+                {{-- 💻 ฝั่งขวา: โปรไฟล์, สลับธีม, ออกจากระบบ (Desktop) --}}
                 <div class="hidden md:flex items-center gap-3 sm:gap-4">
                     <button id="theme-toggle-desktop" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center transition focus:outline-none hover:bg-slate-200 dark:hover:bg-slate-600">
                         <i id="theme-toggle-light-icon-desktop" class="hidden fas fa-sun text-yellow-500"></i>
@@ -55,7 +71,7 @@
                     </form>
                 </div>
                 
-                {{-- 📱 ปุ่มสลับธีม (Mobile) --}}
+                {{-- 📱 ปุ่มสลับธีม (Mobile) ฝั่งขวาบนมือถือ --}}
                 <div class="md:hidden flex items-center">
                     <button id="theme-toggle-mobile" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center transition focus:outline-none hover:bg-slate-200 dark:hover:bg-slate-600">
                         <i id="theme-toggle-light-icon-mobile" class="hidden fas fa-sun text-yellow-500"></i>

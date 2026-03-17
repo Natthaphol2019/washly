@@ -145,7 +145,7 @@ class BookingController extends Controller
             return back()->withErrors(['closed' => 'ขออภัยครับ ปิดรับจองคิวสำหรับวันนี้แล้ว กรุณาเลือกจองเป็น "พรุ่งนี้" แทนนะครับ'])->withInput();
         }
 
-        // 1. ตรวจสอบข้อมูล (แก้ Validate Addons ให้ยืดหยุ่นขึ้น ป้องกัน Error)
+        // 1. ตรวจสอบข้อมูล
         $request->validate([
             'pickup_date' => 'required|in:today,tomorrow',
             'package_id' => 'required|exists:packages,id',
@@ -158,8 +158,8 @@ class BookingController extends Controller
             'use_customer_detergent' => 'nullable|boolean',
             'use_customer_softener' => 'nullable|boolean',
             'addons' => 'nullable|array',
-            'addons.*.code' => 'nullable|string', // 👈 เปลี่ยนเป็น nullable 
-            'addons.*.qty' => 'nullable|integer|min:1|max:10', // 👈 เปลี่ยนเป็น nullable
+            'addons.*.code' => 'nullable|string', 
+            'addons.*.qty' => 'nullable|integer|min:1|max:10', 
             'extra_dry_qty' => 'nullable|array',
         ]);
 
@@ -266,7 +266,24 @@ class BookingController extends Controller
         $customerLng = $request->input('longitude', $user->longitude);
 
         $subtotal = (float) $package->price;
-        $grandTotal = $subtotal + $addonTotal;
+
+        // ==========================================
+        // 🛵 🌟 คำนวณค่ารับ-ส่งผ้าแบบขั้นบันได
+        // ==========================================
+        $deliveryFee = 0;
+        $deliveryDistance = $user->delivery_distance;
+
+        if ($deliveryDistance !== null) {
+            if ($deliveryDistance > 1.5) {
+                // เกิน 1.5 กม. ค่อยคิดเงิน
+                $extraDistance = $deliveryDistance - 1.5;
+                $deliveryFee = ceil($extraDistance) * 20;
+            }
+        }
+
+        // นำค่าซัก + ค่าน้ำยา + ค่าจัดส่ง มารวมกัน
+        $grandTotal = $subtotal + $addonTotal + $deliveryFee;
+
         $paymentMethod = $request->input('payment_method');
         $paymentStatus = $paymentMethod === 'cash' ? 'pending_cash' : 'unpaid';
 
@@ -286,18 +303,18 @@ class BookingController extends Controller
         $order->pickup_address = $request->pickup_address;
         $order->customer_note = $request->customer_note;
 
-        // บันทึกพิกัด
+        // บันทึกพิกัด และ ระยะทาง
         $order->pickup_latitude = $customerLat;
         $order->pickup_longitude = $customerLng;
         $order->pickup_map_link = "https://maps.google.com/?q={$customerLat},{$customerLng}";
-        $order->distance = null;
-
+        $order->distance = $deliveryDistance;
         $order->use_customer_detergent = $useCustomerDetergent;
         $order->use_customer_softener = $useCustomerSoftener;
         $order->subtotal = $subtotal;
         $order->addon_total = $addonTotal;
+        $order->delivery_fee = $deliveryFee; 
         $order->selected_addons = $selectedAddons;
-        $order->total_price = $grandTotal;
+        $order->total_price = $grandTotal; 
         $order->status = 'pending';
         $order->payment_method = $paymentMethod;
         $order->payment_status = $paymentStatus;
@@ -329,6 +346,13 @@ class BookingController extends Controller
             ]);
         }
 
-        return redirect()->route('customer.main')->with('success_order', 'จองคิวสำเร็จ! หมายเลขออเดอร์ของคุณคือ ' . $orderNumber);
+        // 🌟 เปลี่ยนเส้นทางเมื่อจองสำเร็จ
+        if ($paymentMethod === 'transfer') {
+            return redirect()->route('customer.orders.pay', $order->id)
+                ->with('success', 'จองคิวสำเร็จ! กรุณาชำระเงินและแนบสลิปเพื่อยืนยันออเดอร์ครับ');
+        }
+
+        return redirect()->route('customer.orders')
+            ->with('success', 'จองคิวสำเร็จ! ไรเดอร์จะเข้าไปรับผ้าตามรอบเวลาที่คุณเลือกครับ');
     }
 }

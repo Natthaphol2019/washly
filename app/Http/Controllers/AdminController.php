@@ -243,35 +243,34 @@ class AdminController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,picking_up,picked_up,processing,delivering,completed,cancelled'
+            'status' => 'required|in:pending,pending_pickup,picking_up,picked_up,processing,washing_completed,delivering,completed,cancelled'
         ]);
 
         $order = Order::findOrFail($id);
 
-        // เก็บสถานะเก่าไว้เปรียบเทียบ
         $oldStatus = $order->status;
         $newStatus = $request->status;
 
-        // ถ้าสถานะเปลี่ยน ค่อยบันทึกประวัติลงตาราง order_logs
         if ($oldStatus !== $newStatus) {
 
-            // อัปเดตสถานะใหม่ในออเดอร์
             $order->status = $newStatus;
             $order->save();
 
-            // 🌟 บันทึก Timeline ลงตาราง order_logs
             OrderLog::create([
                 'order_id' => $order->id,
-                'user_id' => Auth::id(), // ไอดีของแอดมินที่กดเปลี่ยน
+                'user_id' => Auth::id(),
                 'old_status' => $oldStatus,
                 'new_status' => $newStatus
             ]);
 
+            // 🚨 ปรับแก้: เพิ่มสถานะให้ครบทุกตัว ไม่งั้นมันจะแจ้งเตือนเป็นภาษาอังกฤษ
             $statusLabels = [
-                'pending' => 'รอรับผ้า',
-                'picking_up' => 'กำลังรับผ้า',
-                'picked_up' => 'รับผ้าแล้ว',
+                'pending' => 'รออนุมัติ',
+                'pending_pickup' => 'รอรับผ้า',
+                'picking_up' => 'กำลังไปรับผ้า',
+                'picked_up' => 'รับผ้ามาแล้ว',
                 'processing' => 'กำลังซัก/อบ',
+                'washing_completed' => 'ซักเสร็จ/รอจัดส่ง',
                 'delivering' => 'กำลังนำส่ง',
                 'completed' => 'เสร็จสิ้น',
                 'cancelled' => 'ยกเลิก',
@@ -416,11 +415,15 @@ class AdminController extends Controller
             'image' => 'nullable|image|max:2048',
             'default_detergent_code' => 'nullable|string|exists:addon_options,code',
         ]);
-        // 🌟 อัปโหลดรูป (ถ้ามี)
+
+        // 🌟 1. ดึงข้อมูลทั้งหมดมาก่อน
+        $data = $request->all();
+
+        // 🌟 2. ค่อยอัปโหลดรูปลงไปทับทีหลัง (ถ้ามีการแนบรูปมา)
         if ($request->hasFile('image')) {
             $data['image_path'] = $request->file('image')->store('packages', 'public');
         }
-        $data = $request->all();
+        
         // 🌟 ดักค่า checkbox ให้ชัวร์ 100%
         $data['is_active'] = $request->has('is_active') ? 1 : 0;
 
@@ -439,13 +442,21 @@ class AdminController extends Controller
             'image' => 'nullable|image|max:2048',
             'default_detergent_code' => 'nullable|string|exists:addon_options,code',
         ]);
-        // 🌟 อัปโหลดรูปใหม่ (ถ้ามี)
-        if ($request->hasFile('image')) {
-            $data['image_path'] = $request->file('image')->store('packages', 'public');
-        }
+
         $package = Package::findOrFail($id);
 
+        // 🌟 1. ดึงข้อมูลทั้งหมดมาก่อน
         $data = $request->all();
+
+        // 🌟 2. อัปโหลดรูปใหม่ (ถ้ามี) แล้วค่อยใส่เข้าไปใน $data
+        if ($request->hasFile('image')) {
+            // ลบรูปเก่าทิ้งด้วย (ถ้ามี) จะได้ไม่เปลืองพื้นที่เซิร์ฟเวอร์
+            if ($package->image_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($package->image_path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($package->image_path);
+            }
+            $data['image_path'] = $request->file('image')->store('packages', 'public');
+        }
+
         // 🌟 ดักค่า checkbox ให้ชัวร์ 100%
         $data['is_active'] = $request->has('is_active') ? 1 : 0;
 

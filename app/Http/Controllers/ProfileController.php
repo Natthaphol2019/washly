@@ -8,6 +8,14 @@ use Illuminate\Support\Facades\Auth;
 
 class ProfileController extends Controller
 {
+    /**
+     * Show customer main dashboard page
+     */
+    public function mainDashboard()
+    {
+        return view('customer.main');
+    }
+
     public function update(Request $request, DeliveryDistanceService $deliveryDistanceService)
     {
         // 1. ตรวจสอบข้อมูลก่อนบันทึก (Validation)

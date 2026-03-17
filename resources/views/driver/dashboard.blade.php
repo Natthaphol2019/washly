@@ -164,6 +164,7 @@
                                             $driverStatuses = [
                                                 'pending_pickup' => 'รอรับผ้า',
                                                 'picking_up' => 'กำลังไปรับ',
+                                                'picked_up' => 'รับผ้ามาแล้ว', // 🚨 เพิ่มบรรทัดนี้เข้ามา
                                                 'processing' => 'กำลังซัก/อบ',
                                                 'washing_completed' => 'ซักเสร็จ/รอส่ง',
                                                 'delivering' => 'กำลังไปส่ง',

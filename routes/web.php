@@ -125,7 +125,7 @@ Route::middleware('auth')->group(function () {
     // ------------------------------------------
     Route::prefix('customer')->middleware('role.customer')->group(function () {
         Route::get('/dashboard', function () { return redirect()->route('customer.main'); })->name('customer.dashboard');
-        Route::view('/main', 'customer.main')->name('customer.main');
+        Route::get('/main', [ProfileController::class, 'mainDashboard'])->name('customer.main');
         Route::view('/profile', 'customer.profile')->name('customer.profile');
         Route::put('/profile', [ProfileController::class, 'update'])->name('customer.profile.update');
 

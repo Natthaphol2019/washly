@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -9,6 +10,7 @@ use App\Notifications\SystemNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
 
 class DriverController extends Controller
 {
@@ -16,14 +18,12 @@ class DriverController extends Controller
     // 🛵 หน้ากระดานงาน (Dashboard)
     // ==========================================
     public function index() {
-        // งานของฉัน (โชว์ทุกสถานะที่ยังไม่เสร็จหรือยกเลิก)
         $myOrders = Order::with(['user', 'package'])
             ->where('driver_id', Auth::id())
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->orderBy('created_at', 'asc')
             ->get()
             ->map(function ($order) {
-                // เพิ่ม map_link ให้แต่ละออเดอร์ (ถ้ายังไม่มี)
                 if (!$order->pickup_map_link || strpos($order->pickup_map_link, '?q=,') !== false) {
                     $order->pickup_map_link = $order->map_link;
                 }
@@ -59,6 +59,7 @@ class DriverController extends Controller
             'new_status' => 'picking_up'
         ]);
 
+        // แจ้งเตือนลูกค้า
         if ($order->user) {
             $order->user->notify(new SystemNotification(
                 'ไรเดอร์รับงานแล้ว 🛵',
@@ -68,6 +69,15 @@ class DriverController extends Controller
             ));
         }
 
+        // แจ้งเตือนแอดมิน (เพิ่มใหม่!)
+        $admins = User::whereIn('role', ['admin', 'staff'])->get();
+        Notification::send($admins, new SystemNotification(
+            'ไรเดอร์เริ่มงานแล้ว',
+            'ออเดอร์ ' . $order->order_number . ' ไรเดอร์ (' . Auth::user()->fullname . ') กำลังเดินทางไปรับผ้า',
+            route('admin.orders.index'),
+            'info'
+        ));
+
         return back()->with('success', 'รับงานสำเร็จ! กำลังเดินทางไปรับผ้าครับ');
     }
 
@@ -76,8 +86,9 @@ class DriverController extends Controller
     // ==========================================
     public function updateStatus(Request $request, $id)
     {
+        // 🚨 ปรับแก้: เพิ่ม picked_up เข้าไปให้ไรเดอร์กดได้
         $request->validate([
-            'status' => 'required|in:pending,pending_pickup,picking_up,processing,washing_completed,delivering,completed'
+            'status' => 'required|in:pending,pending_pickup,picking_up,picked_up,processing,washing_completed,delivering,completed'
         ]);
 
         $order = Order::findOrFail($id);
@@ -89,7 +100,6 @@ class DriverController extends Controller
         $oldStatus = $order->status;
         $newStatus = $request->status;
 
-        // ถ้าเลือกสถานะเดิมซ้ำ ให้เด้งกลับเลย ไม่ต้องบันทึกให้รก DB
         if ($oldStatus === $newStatus) {
             return back();
         }
@@ -107,12 +117,14 @@ class DriverController extends Controller
         $statusLabels = [
             'pending_pickup' => 'รอรับผ้า',
             'picking_up' => 'กำลังไปรับ',
+            'picked_up' => 'รับผ้ามาแล้ว', // 🚨 ปรับแก้: เติมคำแปล
             'processing' => 'กำลังซัก/อบ',
             'washing_completed' => 'ซักเสร็จ/รอส่ง',
             'delivering' => 'กำลังไปส่ง',
             'completed' => 'เสร็จสิ้น',
         ];
 
+        // แจ้งเตือนลูกค้า
         if ($order->user) {
             $order->user->notify(new SystemNotification(
                 'อัปเดตสถานะออเดอร์ 🛵',
@@ -121,6 +133,15 @@ class DriverController extends Controller
                 'info'
             ));
         }
+
+        // แจ้งเตือนแอดมิน (เพิ่มใหม่!)
+        $admins = User::whereIn('role', ['admin', 'staff'])->get();
+        Notification::send($admins, new SystemNotification(
+            'ไรเดอร์อัปเดตสถานะ',
+            'ออเดอร์ ' . $order->order_number . ' เปลี่ยนเป็น "' . ($statusLabels[$newStatus] ?? $newStatus) . '"',
+            route('admin.orders.index'),
+            'info'
+        ));
 
         return back()->with('success', 'อัปเดตสถานะเป็น "' . ($statusLabels[$newStatus] ?? $newStatus) . '" สำเร็จ!');
     }
@@ -160,6 +181,15 @@ class DriverController extends Controller
             ));
         }
 
+        // แจ้งเตือนแอดมิน (เพิ่มใหม่!)
+        $admins = User::whereIn('role', ['admin', 'staff'])->get();
+        Notification::send($admins, new SystemNotification(
+            'ไรเดอร์ยกเลิกงาน 🚨',
+            'ออเดอร์ ' . $order->order_number . ' ถูกยกเลิกโดยไรเดอร์ สาเหตุ: ' . $request->cancel_reason,
+            route('admin.orders.index'),
+            'danger'
+        ));
+
         return back()->with('success', 'ยกเลิกออเดอร์เรียบร้อยแล้ว');
     }
 
@@ -175,6 +205,16 @@ class DriverController extends Controller
         if ($order->user) {
             $order->user->notify(new SystemNotification('ยืนยันการชำระเงินแล้ว', 'ออเดอร์ ' . $order->order_number . ' ตรวจสอบสลิปเรียบร้อยโดยไรเดอร์', route('customer.orders'), 'success'));
         }
+
+        // แจ้งเตือนแอดมิน (เพิ่มใหม่!)
+        $admins = User::whereIn('role', ['admin', 'staff'])->get();
+        Notification::send($admins, new SystemNotification(
+            'สลิปถูกอนุมัติโดยไรเดอร์',
+            'ออเดอร์ ' . $order->order_number . ' อนุมัติสลิปเรียบร้อยแล้ว',
+            route('admin.orders.index'),
+            'success'
+        ));
+
         return back()->with('success', 'อนุมัติสลิปสำเร็จ! ✅');
     }
 
@@ -191,6 +231,16 @@ class DriverController extends Controller
         if ($order->user) {
             $order->user->notify(new SystemNotification('เก็บเงินปลายทางสำเร็จ', 'ออเดอร์ ' . $order->order_number . ' ไรเดอร์รับเงินสดเรียบร้อยแล้ว', route('customer.orders'), 'success'));
         }
+
+        // แจ้งเตือนแอดมิน (เพิ่มใหม่!)
+        $admins = User::whereIn('role', ['admin', 'staff'])->get();
+        Notification::send($admins, new SystemNotification(
+            'ไรเดอร์เก็บเงินสดแล้ว',
+            'ออเดอร์ ' . $order->order_number . ' ไรเดอร์เก็บเงินสดจากลูกค้าเรียบร้อยแล้ว 💰',
+            route('admin.orders.index'),
+            'success'
+        ));
+
         return back()->with('success', 'ยืนยันรับเงินสดเรียบร้อย! ✅');
     }
 
@@ -206,6 +256,15 @@ class DriverController extends Controller
             if ($order->user) {
                 $order->user->notify(new SystemNotification('สลิปโอนเงินถูกปฏิเสธ', 'ออเดอร์ ' . $order->order_number . ' กรุณาตรวจสอบและอัปโหลดสลิปใหม่อีกครั้ง', route('customer.orders.pay', $order->id), 'warning'));
             }
+
+            // แจ้งเตือนแอดมิน (เพิ่มใหม่!)
+            $admins = User::whereIn('role', ['admin', 'staff'])->get();
+            Notification::send($admins, new SystemNotification(
+                'ไรเดอร์ปฏิเสธสลิป',
+                'ออเดอร์ ' . $order->order_number . ' ไรเดอร์ปฏิเสธสลิป ให้ลูกค้าอัปโหลดใหม่',
+                route('admin.orders.index'),
+                'warning'
+            ));
         }
         return back()->with('success', 'ปฏิเสธสลิปแล้ว ลูกค้าต้องอัปโหลดใหม่ 🔄');
     }

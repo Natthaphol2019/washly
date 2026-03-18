@@ -116,12 +116,10 @@ class DriverController extends Controller
 
         $statusLabels = [
             'pending_pickup' => 'รอรับผ้า',
-            'picking_up' => 'กำลังไปรับ',
-            'picked_up' => 'รับผ้ามาแล้ว', // 🚨 ปรับแก้: เติมคำแปล
-            'processing' => 'กำลังซัก/อบ',
-            'washing_completed' => 'ซักเสร็จ/รอส่ง',
-            'delivering' => 'กำลังไปส่ง',
-            'completed' => 'เสร็จสิ้น',
+            'picking_up' => 'กำลังไปรับผ้า',
+            'processing' => 'อยู่ระหว่างซัก อบ พับ',
+            'delivering' => 'กำลังจัดส่ง',
+            'completed' => 'จัดส่งเรียบร้อย',
         ];
 
         // แจ้งเตือนลูกค้า

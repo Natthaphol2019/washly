@@ -1,13 +1,12 @@
 @php
     $isHistory = $isHistory ?? false;
     $statusMap = [
-        'pending' => ['color' => 'bg-yellow-400', 'icon' => 'fa-clock-rotate-left fa-spin-pulse', 'text' => 'รออนุมัติ / รอรับผ้า', 'badge' => 'bg-yellow-100 text-yellow-700 border-yellow-200'],
+        'pending' => ['color' => 'bg-yellow-400', 'icon' => 'fa-clock-rotate-left fa-spin-pulse', 'text' => 'รอรับผ้า', 'badge' => 'bg-yellow-100 text-yellow-700 border-yellow-200'],
         'pending_pickup' => ['color' => 'bg-yellow-400', 'icon' => 'fa-clock-rotate-left fa-spin-pulse', 'text' => 'รอรับผ้า', 'badge' => 'bg-yellow-100 text-yellow-700 border-yellow-200'],
         'picking_up' => ['color' => 'bg-blue-400', 'icon' => 'fa-motorcycle fa-bounce', 'text' => 'กำลังไปรับผ้า', 'badge' => 'bg-blue-100 text-blue-700 border-blue-200'],
-        'processing' => ['color' => 'bg-purple-400', 'icon' => 'fa-jug-detergent fa-beat-fade', 'text' => 'กำลังซักและอบ', 'badge' => 'bg-purple-100 text-purple-700 border-purple-200'],
-        'washing_completed' => ['color' => 'bg-indigo-400', 'icon' => 'fa-basket-shopping', 'text' => 'ซักเสร็จ รอไปส่ง', 'badge' => 'bg-indigo-100 text-indigo-700 border-indigo-200'],
-        'delivering' => ['color' => 'bg-indigo-400', 'icon' => 'fa-truck-fast fa-beat', 'text' => 'กำลังนำส่งคืน', 'badge' => 'bg-indigo-100 text-indigo-700 border-indigo-200'],
-        'completed' => ['color' => 'bg-green-400', 'icon' => 'fa-check-double', 'text' => 'เสร็จสิ้นภารกิจ', 'badge' => 'bg-green-100 text-green-700 border-green-200'],
+        'processing' => ['color' => 'bg-purple-400', 'icon' => 'fa-jug-detergent fa-beat-fade', 'text' => 'อยู่ระหว่างซัก อบ พับ', 'badge' => 'bg-purple-100 text-purple-700 border-purple-200'],
+        'delivering' => ['color' => 'bg-indigo-400', 'icon' => 'fa-truck-fast fa-beat', 'text' => 'กำลังจัดส่ง', 'badge' => 'bg-indigo-100 text-indigo-700 border-indigo-200'],
+        'completed' => ['color' => 'bg-green-400', 'icon' => 'fa-check-double', 'text' => 'จัดส่งเรียบร้อย', 'badge' => 'bg-green-100 text-green-700 border-green-200'],
         'cancelled' => ['color' => 'bg-red-400', 'icon' => 'fa-xmark', 'text' => 'ยกเลิกออเดอร์', 'badge' => 'bg-red-100 text-red-700 border-red-200'],
     ];
     $status = $statusMap[$order->status] ?? $statusMap['pending'];
@@ -165,11 +164,11 @@
                         @php
                             $logIcon = 'fa-circle-dot'; $logColor = 'text-gray-400'; $logBg = 'bg-gray-100'; $logText = 'อัปเดตสถานะ';
                             switch($log->new_status) {
-                                case 'picking_up': $logIcon = 'fa-motorcycle'; $logColor = 'text-blue-500'; $logBg = 'bg-blue-100'; $logText = 'ไรเดอร์กำลังเดินทางไปรับผ้า'; break;
-                                case 'picked_up': $logIcon = 'fa-check'; $logColor = 'text-blue-500'; $logBg = 'bg-blue-100'; $logText = 'ไรเดอร์รับผ้ามาแล้ว'; break;
-                                case 'processing': $logIcon = 'fa-jug-detergent'; $logColor = 'text-purple-500'; $logBg = 'bg-purple-100'; $logText = 'กำลังซักและอบ'; break;
-                                case 'washing_completed': $logIcon = 'fa-basket-shopping'; $logColor = 'text-indigo-500'; $logBg = 'bg-indigo-100'; $logText = 'ซักเสร็จเรียบร้อย รอจัดส่ง'; break;
-                                case 'delivering': $logIcon = 'fa-truck-fast'; $logColor = 'text-indigo-500'; $logBg = 'bg-indigo-100'; $logText = 'กำลังเดินทางไปส่งคืน'; break;
+                                case 'picking_up': $logIcon = 'fa-motorcycle'; $logColor = 'text-blue-500'; $logBg = 'bg-blue-100'; $logText = 'กำลังไปรับผ้า'; break;
+                                case 'processing': $logIcon = 'fa-jug-detergent'; $logColor = 'text-purple-500'; $logBg = 'bg-purple-100'; $logText = 'อยู่ระหว่างซัก อบ พับ'; break;
+                                case 'delivering': $logIcon = 'fa-truck-fast'; $logColor = 'text-indigo-500'; $logBg = 'bg-indigo-100'; $logText = 'กำลังจัดส่ง'; break;
+                                case 'completed': $logIcon = 'fa-check-double'; $logColor = 'text-green-500'; $logBg = 'bg-green-100'; $logText = 'จัดส่งเรียบร้อย'; break;
+                                case 'washing_completed': $logIcon = 'fa-basket-shopping'; $logColor = 'text-purple-500'; $logBg = 'bg-purple-100'; $logText = 'อยู่ระหว่างซัก อบ พับ'; break; 
                             }
                         @endphp
                         <div class="flex items-start gap-4 relative">

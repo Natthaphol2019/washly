@@ -220,12 +220,10 @@ class AdminController extends Controller
         $statusLabels = [
             'pending' => 'รออนุมัติ',
             'pending_pickup' => 'รอรับผ้า',
-            'picking_up' => 'กำลังไปรับ',
-            'picked_up' => 'รับผ้ามาแล้ว',
-            'processing' => 'กำลังซัก/อบ',
-            'washing_completed' => 'ซักเสร็จ/รอส่ง',
-            'delivering' => 'กำลังไปส่ง',
-            'completed' => 'เสร็จสิ้น',
+            'picking_up' => 'กำลังไปรับผ้า',
+            'processing' => 'อยู่ระหว่างซัก อบ พับ',
+            'delivering' => 'กำลังจัดส่ง',
+            'completed' => 'จัดส่งเรียบร้อย',
             'cancelled' => 'ยกเลิก',
         ];
 
@@ -330,11 +328,9 @@ class AdminController extends Controller
                 'pending' => 'รออนุมัติ',
                 'pending_pickup' => 'รอรับผ้า',
                 'picking_up' => 'กำลังไปรับผ้า',
-                'picked_up' => 'รับผ้ามาแล้ว',
-                'processing' => 'กำลังซัก/อบ',
-                'washing_completed' => 'ซักเสร็จ/รอจัดส่ง',
-                'delivering' => 'กำลังนำส่ง',
-                'completed' => 'เสร็จสิ้น',
+                'processing' => 'อยู่ระหว่างซัก อบ พับ',
+                'delivering' => 'กำลังจัดส่ง',
+                'completed' => 'จัดส่งเรียบร้อย',
                 'cancelled' => 'ยกเลิก',
             ];
 

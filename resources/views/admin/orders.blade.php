@@ -55,14 +55,11 @@
                         </label>
                         <select name="status" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                             <option value="">ทั้งหมด</option>
-                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>รออนุมัติ</option>
-                            <option value="pending_pickup" {{ request('status') == 'pending_pickup' ? 'selected' : '' }}>รอรับผ้า</option>
-                            <option value="picking_up" {{ request('status') == 'picking_up' ? 'selected' : '' }}>กำลังไปรับ</option>
-                            <option value="picked_up" {{ request('status') == 'picked_up' ? 'selected' : '' }}>รับผ้ามาแล้ว</option>
-                            <option value="processing" {{ request('status') == 'processing' ? 'selected' : '' }}>กำลังซัก/อบ</option>
-                            <option value="washing_completed" {{ request('status') == 'washing_completed' ? 'selected' : '' }}>ซักเสร็จ/รอส่ง</option>
-                            <option value="delivering" {{ request('status') == 'delivering' ? 'selected' : '' }}>กำลังไปส่ง</option>
-                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>เสร็จสิ้น</option>
+                            <option value="pending_pickup" {{ in_array(request('status'), ['pending', 'pending_pickup']) ? 'selected' : '' }}>รอรับผ้า</option>
+                            <option value="picking_up" {{ request('status') == 'picking_up' ? 'selected' : '' }}>กำลังไปรับผ้า</option>
+                            <option value="processing" {{ request('status') == 'processing' ? 'selected' : '' }}>อยู่ระหว่างซัก อบ พับ</option>
+                            <option value="delivering" {{ request('status') == 'delivering' ? 'selected' : '' }}>กำลังจัดส่ง</option>
+                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>จัดส่งเรียบร้อย</option>
                             <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>ยกเลิก</option>
                         </select>
                     </div>
@@ -124,7 +121,7 @@
                     <i class="fa-solid fa-filter"></i> 
                     กำลังแสดงผลลัพธ์ที่กรอง: 
                     @if(request('search')) <span class="font-semibold">ค้นหา="{{ request('search') }}"</span> @endif
-                    @if(request('status')) <span class="font-semibold">สถานะ="{{ $statusLabels[request('status')] ?? request('status') }}"</span> @endif
+                    @if(request('status')) <span class="font-semibold">สถานะ="{{ request('status') }}"</span> @endif
                     @if(request('payment_status')) <span class="font-semibold">ชำระเงิน="{{ request('payment_status') }}"</span> @endif
                     @if(request('payment_method')) <span class="font-semibold">วิธีชำระ="{{ request('payment_method') }}"</span> @endif
                 </p>
@@ -150,7 +147,7 @@
                             <th class="px-6 py-4 font-semibold">ออเดอร์</th>
                             <th class="px-6 py-4 font-semibold">ลูกค้า</th>
                             <th class="px-6 py-4 font-semibold">รายการ/ชำระเงิน</th>
-                            <th class="px-6 py-4 font-semibold text-center">พนักงานขับรถ</th> {{-- 👈 คอลัมน์ใหม่ --}}
+                            <th class="px-6 py-4 font-semibold text-center">พนักงานขับรถ</th>
                             <th class="px-6 py-4 font-semibold text-center">สถานะปัจจุบัน</th>
                         </tr>
                     </thead>
@@ -266,9 +263,9 @@
                                     </div>
                                 </td>
 
-                                {{-- 4. 🚚 จ่ายงานให้คนขับ (Assign Driver) --}} <td class="px-6 py-4 text-center">
+                                {{-- 4. จ่ายงานให้คนขับ --}}
+                                <td class="px-6 py-4 text-center">
                                     @if($order->driver_id)
-                                        {{-- ถ้ามีคนขับแล้ว โชว์ชื่อคนขับ --}}
                                         <div
                                             class="inline-flex items-center gap-2 bg-sky-50 dark:bg-sky-900/30 border border-sky-100 dark:border-sky-800 px-3 py-1.5 rounded-xl">
                                             <div
@@ -279,7 +276,6 @@
                                                 class="text-xs font-semibold text-sky-700 dark:text-sky-400">{{ $order->driver->fullname ?? 'ไม่ทราบชื่อ' }}</span>
                                         </div>
                                     @else
-                                        {{-- ถ้ายังไม่มีคนขับ (โชว์ช่องให้เลือกตราบใดที่ยังไม่ยกเลิกหรือเสร็จสิ้น) --}}
                                         @if(!in_array($order->status, ['completed', 'cancelled']))
                                             <form action="{{ route('admin.orders.assign_driver', $order->id) }}" method="POST" class="m-0 flex flex-col items-center gap-2" onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('button[type=submit]').innerHTML = '<i class=\'fas fa-spinner fa-spin\'></i> รอสักครู่...';">
                                                 @csrf
@@ -298,55 +294,48 @@
                                             <span class="text-xs text-gray-400">-</span>
                                         @endif
                                     @endif
-                                    </td>
+                                </td>
 
-                                    {{-- 5. สถานะปัจจุบัน (อัปเดต) --}}
-                            <td class="px-6 py-4 text-center">
-                                @if($order->status === 'cancelled')
-                                    {{-- ถ้าถูกยกเลิกแล้ว ล็อกตายตัวเลย --}}
-                                    <div class="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 px-3 py-2 rounded-xl text-left">
-                                        <p class="font-bold text-xs mb-1"><i class="fa-solid fa-ban"></i> ถูกยกเลิกแล้ว</p>
-                                        <p class="text-[10px] opacity-90">เหตุผล: {{ $order->cancel_reason ?? 'ไม่ได้ระบุเหตุผล' }}</p>
-                                    </div>
-                                @else
-                                    {{-- ถ้ายังไม่ยกเลิก โชว์ Dropdown ปกติ --}}
-                                    @php
-                                        $statusLabels = [
-                                            'pending' => 'รออนุมัติ',
-                                            'pending_pickup' => 'รอรับผ้า',
-                                            'picking_up' => 'กำลังไปรับ',
-                                            'picked_up' => 'รับผ้ามาแล้ว', // 🚨 เพิ่มบรรทัดนี้เข้ามา
-                                            'processing' => 'กำลังซัก/อบ',
-                                            'washing_completed' => 'ซักเสร็จ/รอส่ง',
-                                            'delivering' => 'กำลังไปส่ง',
-                                            'completed' => 'เสร็จสิ้น',
-                                        ];
-                                    @endphp
-                                    <form action="{{ route('admin.orders.status', $order->id) }}" method="POST" class="flex flex-col items-center gap-2 m-0" onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('button[type=submit]').innerHTML = 'กำลังบันทึก...';">
-                                        @csrf
-                                        @method('PUT')
-                                        <select name="status" class="text-xs border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 font-semibold rounded-lg py-1.5 px-2 outline-none focus:border-sky-500 w-32 text-center">
-                                            @foreach ($statusLabels as $key => $label)
-                                                <option value="{{ $key }}" {{ $order->status == $key ? 'selected' : '' }}>{{ $label }}</option>
-                                            @endforeach
-                                        </select>
-                                        <button type="submit" class="text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-600 dark:text-slate-300 dark:hover:bg-slate-500 px-3 py-1 rounded-lg w-full transition">บันทึกสถานะ</button>
-                                    </form>
+                                {{-- 5. สถานะปัจจุบัน (อัปเดต) --}}
+                                <td class="px-6 py-4 text-center">
+                                    @if($order->status === 'cancelled')
+                                        <div class="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 px-3 py-2 rounded-xl text-left">
+                                            <p class="font-bold text-xs mb-1"><i class="fa-solid fa-ban"></i> ถูกยกเลิกแล้ว</p>
+                                            <p class="text-[10px] opacity-90">เหตุผล: {{ $order->cancel_reason ?? 'ไม่ได้ระบุเหตุผล' }}</p>
+                                        </div>
+                                    @else
+                                        @php
+                                            $statusLabels = [
+                                                'pending_pickup' => 'รอรับผ้า',
+                                                'picking_up' => 'กำลังไปรับผ้า',
+                                                'processing' => 'อยู่ระหว่างซัก อบ พับ',
+                                                'delivering' => 'กำลังจัดส่ง',
+                                                'completed' => 'จัดส่งเรียบร้อย',
+                                            ];
+                                        @endphp
+                                        <form action="{{ route('admin.orders.status', $order->id) }}" method="POST" class="flex flex-col items-center gap-2 m-0" onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('button[type=submit]').innerHTML = 'กำลังบันทึก...';">
+                                            @csrf
+                                            @method('PUT')
+                                            <select name="status" class="text-xs border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 font-semibold rounded-lg py-1.5 px-2 outline-none focus:border-sky-500 w-32 text-center">
+                                                @foreach ($statusLabels as $key => $label)
+                                                    <option value="{{ $key }}" {{ ($order->status == $key || ($order->status == 'pending' && $key == 'pending_pickup')) ? 'selected' : '' }}>{{ $label }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="submit" class="text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-600 dark:text-slate-300 dark:hover:bg-slate-500 px-3 py-1 rounded-lg w-full transition">บันทึกสถานะ</button>
+                                        </form>
 
-                                    {{-- ปุ่มยกเลิกแยกต่างหาก --}}
-                                    <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 w-full">
-                                        <button type="button" onclick="confirmCancelOrder({{ $order->id }}, '{{ $order->order_number }}')" class="text-[10px] text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/30 dark:hover:bg-rose-800/50 w-full py-1.5 rounded-lg transition-colors font-medium flex items-center justify-center gap-1">
-                                            <i class="fa-solid fa-ban"></i> ยกเลิกออเดอร์
-                                        </button>
-                                    </div>
+                                        <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 w-full">
+                                            <button type="button" onclick="confirmCancelOrder({{ $order->id }}, '{{ $order->order_number }}')" class="text-[10px] text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/30 dark:hover:bg-rose-800/50 w-full py-1.5 rounded-lg transition-colors font-medium flex items-center justify-center gap-1">
+                                                <i class="fa-solid fa-ban"></i> ยกเลิกออเดอร์
+                                            </button>
+                                        </div>
 
-                                    {{-- ฟอร์มซ่อนสำหรับส่งค่ายกเลิก --}}
-                                    <form id="cancel-form-{{ $order->id }}" action="{{ route('admin.orders.cancel', $order->id) }}" method="POST" class="hidden">
-                                        @csrf
-                                        <input type="hidden" name="cancel_reason" id="cancel-reason-{{ $order->id }}">
-                                    </form>
-                                @endif
-                            </td>
+                                        <form id="cancel-form-{{ $order->id }}" action="{{ route('admin.orders.cancel', $order->id) }}" method="POST" class="hidden">
+                                            @csrf
+                                            <input type="hidden" name="cancel_reason" id="cancel-reason-{{ $order->id }}">
+                                        </form>
+                                    @endif
+                                </td>
 
                             </tr>
                         @empty
@@ -407,7 +396,7 @@
         })
     }
 
-    // 3. ฟังก์ชันยกเลิกออเดอร์ (พร้อมบังคับใส่เหตุผล)
+    // 3. ฟังก์ชันยกเลิกออเดอร์
     function confirmCancelOrder(orderId, orderNumber) {
         const isDark = document.documentElement.classList.contains('dark');
         Swal.fire({
@@ -431,7 +420,6 @@
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                // เอาเหตุผลไปใส่ในฟอร์มที่ซ่อนไว้ แล้วกดยืนยันฟอร์ม
                 document.getElementById('cancel-reason-' + orderId).value = result.value;
                 document.getElementById('cancel-form-' + orderId).submit();
             }
@@ -439,7 +427,7 @@
     }
 </script>
 
-{{-- 4. ตัวดักจับ Error และเด้งเตือนสีแดง (เช่น ลืมเลือกคนขับ) --}}
+{{-- 4. ตัวดักจับ Error และเด้งเตือนสีแดง --}}
 @if (session('error'))
     <script>
         document.addEventListener('DOMContentLoaded', function() {

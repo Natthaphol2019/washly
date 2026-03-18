@@ -36,6 +36,93 @@
             </div>
         @endif
 
+        {{-- 🔍 Filter และ Search --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-5">
+            <form method="GET" action="{{ route('admin.packages.index') }}" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    
+                    {{-- ค้นหาชื่อแพ็กเกจ --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                            <i class="fa-solid fa-search"></i> ค้นหาแพ็กเกจ
+                        </label>
+                        <input type="text" name="search" value="{{ request('search') }}" 
+                            placeholder="ชื่อแพ็กเกจ..."
+                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                    </div>
+
+                    {{-- กรองตามสถานะ --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                            <i class="fa-solid fa-filter"></i> สถานะ
+                        </label>
+                        <select name="status" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                            <option value="">ทั้งหมด</option>
+                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>ใช้งาน</option>
+                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>ซ่อน</option>
+                        </select>
+                    </div>
+
+                    {{-- กรองตามน้ำยาเริ่มต้น --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                            <i class="fa-solid fa-pump-soap"></i> น้ำยาเริ่มต้น
+                        </label>
+                        <select name="detergent" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                            <option value="">ทั้งหมด</option>
+                            @foreach ($detergentOptions as $detergent)
+                                <option value="{{ $detergent->code }}" {{ request('detergent') == $detergent->code ? 'selected' : '' }}>{{ $detergent->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- เรียงลำดับ --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                            <i class="fa-solid fa-arrow-down-a-z"></i> เรียงตาม
+                        </label>
+                        <select name="sort" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                            <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }}>ชื่อ A-Z</option>
+                            <option value="name_desc" {{ request('sort') == 'name_desc' ? 'selected' : '' }}>ชื่อ Z-A</option>
+                            <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>ราคาต่ำ → สูง</option>
+                            <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>ราคาสูง → ต่ำ</option>
+                            <option value="created_at_desc" {{ request('sort') == 'created_at_desc' ? 'selected' : '' }}>ใหม่ → เก่า</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-3 pt-2">
+                    <button type="submit" class="bg-sky-500 hover:bg-sky-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-magnifying-glass"></i> ค้นหา
+                    </button>
+                    <a href="{{ route('admin.packages.index') }}" class="bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-left"></i> ล้างตัวกรอง
+                    </a>
+                    
+                    @if(request()->hasAny(['search', 'status', 'detergent', 'sort']))
+                        <div class="flex items-center gap-2 ml-auto text-xs text-gray-500 dark:text-gray-400">
+                            <span class="font-semibold text-sky-600 dark:text-sky-400">{{ $packages->count() }}</span> แพ็กเกจ
+                        </div>
+                    @endif
+                </div>
+            </form>
+        </div>
+
+        {{-- สรุปผลการค้นหา --}}
+        @if(request()->hasAny(['search', 'status', 'detergent']))
+            <div class="flex items-center justify-between text-sm bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800 px-4 py-2.5 rounded-xl">
+                <p class="text-sky-700 dark:text-sky-400">
+                    <i class="fa-solid fa-filter"></i> 
+                    กำลังแสดงผลลัพธ์ที่กรอง: 
+                    @if(request('search')) <span class="font-semibold">ค้นหา="{{ request('search') }}"</span> @endif
+                    @if(request('status') == 'active') <span class="font-semibold">สถานะ="ใช้งาน"</span> @endif
+                    @if(request('status') == 'inactive') <span class="font-semibold">สถานะ="ซ่อน"</span> @endif
+                    @if(request('detergent')) <span class="font-semibold">น้ำยา="{{ $detergentOptions->firstWhere('code', request('detergent'))?->name ?? request('detergent') }}"</span> @endif
+                </p>
+                <span class="text-sky-600 dark:text-sky-400 font-bold">{{ $packages->count() }} แพ็กเกจ</span>
+            </div>
+        @endif
+
         {{-- 🔹 ตารางแพ็กเกจหลัก --}}
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="overflow-x-auto">

@@ -128,6 +128,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/main', [ProfileController::class, 'mainDashboard'])->name('customer.main');
         Route::view('/profile', 'customer.profile')->name('customer.profile');
         Route::put('/profile', [ProfileController::class, 'update'])->name('customer.profile.update');
+        Route::put('/profile/password', [ProfileController::class, 'changePassword'])->name('customer.profile.password');
 
         Route::get('/book', [BookingController::class, 'showBookingForm'])->name('customer.book');
         Route::get('/book/delivery-quote', [BookingController::class, 'deliveryQuote'])->name('customer.book.delivery_quote');

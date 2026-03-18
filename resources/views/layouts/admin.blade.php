@@ -34,8 +34,8 @@
             <div class="h-16 flex items-center justify-between px-6 bg-slate-950/50 border-b border-slate-800">
                 <a href="{{ route('admin.dashboard') }}"
                     class="text-xl font-bold washly-brand-text flex items-center gap-2">
-                    <span class="h-10 w-28 overflow-hidden flex items-center">
-                        <img src="{{ asset('Brand.png') }}" alt="Washly Logo" class="h-20 w-auto max-w-none -ml-4 drop-shadow-sm">
+                    <span class="h-12 w-32 overflow-hidden flex items-center">
+                        <img src="{{ asset('Brand.png') }}" alt="Washly Logo" class="h-full w-auto object-contain drop-shadow-sm">
                     </span>
                     <span class="text-base font-semibold text-sky-100">Admin</span>
                 </a>

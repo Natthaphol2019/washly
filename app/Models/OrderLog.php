@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class OrderLog extends Model
 {
-    protected $fillable = ['order_id', 'user_id', 'old_status', 'new_status'];
+    protected $fillable = ['order_id', 'user_id', 'old_status', 'new_status','note'];
 
     public function order()
     {

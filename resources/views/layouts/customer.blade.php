@@ -26,8 +26,8 @@
         <div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 h-16 flex items-center justify-between">
 
             <a href="{{ route('customer.main') }}" class="text-xl sm:text-2xl font-extrabold flex items-center gap-2 sm:gap-3 hover:scale-105 transition-transform duration-300 group flex-1 min-w-0 md:flex-none md:min-w-[200px] lg:min-w-[280px]">
-                <span class="h-10 sm:h-12 w-32 sm:w-40 lg:w-48 overflow-hidden flex items-center shrink-0">
-                    <img src="{{ asset('Brand.png') }}" alt="Washly Logo" class="h-20 sm:h-24 w-auto max-w-none -ml-2 sm:-ml-4 lg:-ml-5 drop-shadow-sm">
+                <span class="h-12 sm:h-14 w-32 sm:w-40 lg:w-48 overflow-hidden flex items-center shrink-0">
+                    <img src="{{ asset('Brand.png') }}" alt="Washly Logo" class="h-full w-auto object-contain drop-shadow-sm">
                 </span>
             </a>
 

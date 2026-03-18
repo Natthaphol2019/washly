@@ -157,17 +157,79 @@ class AdminController extends Controller
 
         return view('admin.dashboard', compact('orders', 'packages', 'paidCashTotal', 'paidTransferTotal', 'topAddonStats'));
     }
-    // 2. 🚨 เพิ่มฟังก์ชันใหม่: หน้าจัดการออเดอร์แบบเต็มๆ
-    public function manageOrders()
+    // 2. 🚨 เพิ่มฟังก์ชันใหม่: หน้าจัดการออเดอร์แบบเต็มๆ (พร้อม Filter & Sort)
+    public function manageOrders(Request $request)
     {
-        // ... (โค้ดดึงออเดอร์ของซีเหมือนเดิม)
-        $orders = Order::with(['user', 'package', 'driver'])->orderBy('created_at', 'desc')->get();
+        // สร้าง Query ตั้งต้น
+        $query = Order::with(['user', 'package', 'driver']);
 
-        // 👇 เพิ่มบรรทัดนี้: ดึงรายชื่อพนักงานขับรถทั้งหมดไปแสดงใน Dropdown เลือกคนขับ
+        // 🔍 Filter: ค้นหา
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('order_number', 'LIKE', "%{$search}%")
+                  ->orWhereHas('user', function($sub) use ($search) {
+                      $sub->where('fullname', 'LIKE', "%{$search}%");
+                  });
+            });
+        }
+
+        // 🔍 Filter: สถานะ
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // 🔍 Filter: การชำระเงิน
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        // 🔍 Filter: วิธีชำระ
+        if ($request->filled('payment_method')) {
+            $query->where('payment_method', $request->payment_method);
+        }
+
+        // 📊 Sort: เรียงลำดับ
+        $sort = $request->get('sort', 'created_at_desc');
+        switch ($sort) {
+            case 'created_at_asc':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'created_at_desc':
+                $query->orderBy('created_at', 'desc');
+                break;
+            case 'order_number_asc':
+                $query->orderBy('order_number', 'asc');
+                break;
+            case 'total_price_desc':
+                $query->orderBy('total_price', 'desc');
+                break;
+            case 'total_price_asc':
+                $query->orderBy('total_price', 'asc');
+                break;
+            default:
+                $query->orderBy('created_at', 'desc');
+        }
+
+        $orders = $query->get();
+
+        // 👇 ดึงรายชื่อพนักงานขับรถทั้งหมดไปแสดงใน Dropdown เลือกคนขับ
         $drivers = User::where('role', 'driver')->get();
 
-        // อย่าลืมส่งตัวแปร $drivers ไปด้วยนะ
-        return view('admin.orders', compact('orders', 'drivers'));
+        // ส่งตัวแปร $statusLabels ไปให้ view ด้วย
+        $statusLabels = [
+            'pending' => 'รออนุมัติ',
+            'pending_pickup' => 'รอรับผ้า',
+            'picking_up' => 'กำลังไปรับ',
+            'picked_up' => 'รับผ้ามาแล้ว',
+            'processing' => 'กำลังซัก/อบ',
+            'washing_completed' => 'ซักเสร็จ/รอส่ง',
+            'delivering' => 'กำลังไปส่ง',
+            'completed' => 'เสร็จสิ้น',
+            'cancelled' => 'ยกเลิก',
+        ];
+
+        return view('admin.orders', compact('orders', 'drivers', 'statusLabels'));
     }
 
     public function settings(AppSettingService $appSettingService)
@@ -393,12 +455,56 @@ class AdminController extends Controller
 
         return redirect()->back()->with('success', 'ลบสลิปที่ไม่ถูกต้องเรียบร้อยแล้ว ลูกค้าสามารถอัปโหลดใหม่ได้ครับ 🔄');
     }
-    // 1. หน้าแสดงรายการแพ็กเกจทั้งหมด
-    public function packages()
+    // 1. หน้าแสดงรายการแพ็กเกจทั้งหมด (พร้อม Filter & Sort)
+    public function packages(Request $request)
     {
         $this->ensureAddonCatalog();
 
-        $packages = Package::orderBy('price', 'asc')->get();
+        // สร้าง Query ตั้งต้น
+        $query = Package::query();
+
+        // 🔍 Filter: ค้นหาชื่อแพ็กเกจ
+        if ($request->filled('search')) {
+            $query->where('name', 'LIKE', "%{$request->search}%");
+        }
+
+        // 🔍 Filter: สถานะ
+        if ($request->filled('status')) {
+            if ($request->status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($request->status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+
+        // 🔍 Filter: น้ำยาเริ่มต้น
+        if ($request->filled('detergent')) {
+            $query->where('default_detergent_code', $request->detergent);
+        }
+
+        // 📊 Sort: เรียงลำดับ
+        $sort = $request->get('sort', 'name_asc');
+        switch ($sort) {
+            case 'name_asc':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'desc');
+                break;
+            case 'price_asc':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price_desc':
+                $query->orderBy('price', 'desc');
+                break;
+            case 'created_at_desc':
+                $query->orderBy('created_at', 'desc');
+                break;
+            default:
+                $query->orderBy('name', 'asc');
+        }
+
+        $packages = $query->get();
         $addonOptions = AddonOption::orderBy('category')->orderBy('name')->get();
         $detergentOptions = $addonOptions->where('category', 'detergent')->values();
 
@@ -583,12 +689,53 @@ class AdminController extends Controller
         return redirect()->route('admin.packages.index')->with('success', 'ลบเมนูเสริมเรียบร้อยแล้ว 🗑️');
     }
     // ==========================================
-    // 👥 โซนจัดการลูกค้า (Customer)
+    // 👥 โซนจัดการลูกค้า (Customer) - พร้อม Filter & Sort
     // ==========================================
-    public function customers()
+    public function customers(Request $request)
     {
-        // ดึงเฉพาะคนที่มี role เป็น customer
-        $customers = User::where('role', 'customer')->orderBy('created_at', 'desc')->get();
+        // สร้าง Query ตั้งต้น
+        $query = User::where('role', 'customer');
+
+        // 🔍 Filter: ค้นหาชื่อ/username
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('fullname', 'LIKE', "%{$request->search}%")
+                  ->orWhere('username', 'LIKE', "%{$request->search}%");
+            });
+        }
+
+        // 🔍 Filter: สถานะประเมินระยะทาง
+        if ($request->filled('distance_status')) {
+            if ($request->distance_status === 'assessed') {
+                $query->whereNotNull('delivery_distance');
+            } elseif ($request->distance_status === 'pending') {
+                $query->whereNull('delivery_distance');
+            }
+        }
+
+        // 📊 Sort: เรียงลำดับ
+        $sort = $request->get('sort', 'name_asc');
+        switch ($sort) {
+            case 'name_asc':
+                $query->orderBy('fullname', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('fullname', 'desc');
+                break;
+            case 'distance_asc':
+                $query->orderBy('delivery_distance', 'asc')->whereNotNull('delivery_distance');
+                break;
+            case 'distance_desc':
+                $query->orderBy('delivery_distance', 'desc')->whereNotNull('delivery_distance');
+                break;
+            case 'created_at_desc':
+                $query->orderBy('created_at', 'desc');
+                break;
+            default:
+                $query->orderBy('fullname', 'asc');
+        }
+
+        $customers = $query->get();
         return view('admin.customers', compact('customers'));
     }
 
@@ -650,12 +797,46 @@ class AdminController extends Controller
 
 
     // ==========================================
-    // 👨‍💼 โซนจัดการพนักงานและแอดมิน (Staff & Admin)
+    // 👨‍💼 โซนจัดการพนักงานและแอดมิน (Staff & Admin) - พร้อม Filter & Sort
     // ==========================================
-    public function staff()
+    public function staff(Request $request)
     {
-        // ดึงคนที่เป็น admin หรือ staff
-        $staff = User::whereIn('role', ['admin', 'staff'])->orderBy('role')->get();
+        // สร้าง Query ตั้งต้น
+        $query = User::whereIn('role', ['admin', 'staff']);
+
+        // 🔍 Filter: ค้นหาชื่อ/username
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('fullname', 'LIKE', "%{$request->search}%")
+                  ->orWhere('username', 'LIKE', "%{$request->search}%");
+            });
+        }
+
+        // 🔍 Filter: บทบาท
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        // 📊 Sort: เรียงลำดับ
+        $sort = $request->get('sort', 'name_asc');
+        switch ($sort) {
+            case 'name_asc':
+                $query->orderBy('fullname', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('fullname', 'desc');
+                break;
+            case 'role_asc':
+                $query->orderBy('role', 'asc')->orderBy('fullname', 'asc');
+                break;
+            case 'created_at_desc':
+                $query->orderBy('created_at', 'desc');
+                break;
+            default:
+                $query->orderBy('fullname', 'asc');
+        }
+
+        $staff = $query->get();
         return view('admin.staff', compact('staff'));
     }
 
@@ -723,12 +904,41 @@ class AdminController extends Controller
         return redirect()->route('admin.staff.index')->with('success', 'ลบข้อมูลพนักงานออกจากระบบแล้ว 🗑️');
     }
     // ==========================================
-    // 🛵 ระบบจัดการคนขับรถ (Driver)
+    // 🛵 ระบบจัดการคนขับรถ (Driver) - พร้อม Filter & Sort
     // ==========================================
-    public function drivers()
+    public function drivers(Request $request)
     {
-        // ดึงเฉพาะคนที่มี Role เป็น driver
-        $drivers = User::where('role', 'driver')->orderBy('created_at', 'desc')->get();
+        // สร้าง Query ตั้งต้น
+        $query = User::where('role', 'driver');
+
+        // 🔍 Filter: ค้นหาชื่อ/username
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('fullname', 'LIKE', "%{$request->search}%")
+                  ->orWhere('username', 'LIKE', "%{$request->search}%");
+            });
+        }
+
+        // 📊 Sort: เรียงลำดับ
+        $sort = $request->get('sort', 'name_asc');
+        switch ($sort) {
+            case 'name_asc':
+                $query->orderBy('fullname', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('fullname', 'desc');
+                break;
+            case 'created_at_desc':
+                $query->orderBy('created_at', 'desc');
+                break;
+            case 'created_at_asc':
+                $query->orderBy('created_at', 'asc');
+                break;
+            default:
+                $query->orderBy('fullname', 'asc');
+        }
+
+        $drivers = $query->get();
         return view('admin.drivers', compact('drivers'));
     }
 

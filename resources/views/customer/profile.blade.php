@@ -49,15 +49,58 @@
                     <textarea id="pickup_address" name="address" rows="4" required
                               placeholder="บ้านเลขที่, ซอย, ถนน, ตำบล..."
                               class="w-full p-4 rounded-xl border-2 border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-gray-200 focus:border-blue-400 focus:ring-0 outline-none transition-colors resize-none">{{ Auth::user()->address }}</textarea>
-                    
+
                     <input type="hidden" id="latitude" name="latitude" value="{{ Auth::user()->latitude }}">
                     <input type="hidden" id="longitude" name="longitude" value="{{ Auth::user()->longitude }}">
                     <input type="hidden" id="map_link" name="map_link" value="{{ Auth::user()->map_link }}">
                 </div>
 
-                <div class="pt-6">
+                <div class="pt-4">
                     <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white text-lg font-bold py-4 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                         <i class="fa-solid fa-floppy-disk mr-2"></i> บันทึกข้อมูลโปรไฟล์
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {{-- 🔐 ส่วนเปลี่ยนรหัสผ่าน --}}
+        <div class="bg-white dark:bg-slate-800 rounded-[30px] p-6 md:p-10 shadow-lg border border-pink-50 dark:border-slate-700 transition-colors">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white shadow-md">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">เปลี่ยนรหัสผ่าน</h3>
+            </div>
+
+            <form action="{{ route('customer.profile.password') }}" method="POST" class="space-y-5">
+                @csrf
+                @method('PUT')
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">รหัสผ่านปัจจุบัน</label>
+                    <input type="password" name="current_password" required
+                           placeholder="กรอกรหัสผ่านปัจจุบัน"
+                           class="w-full px-4 py-3 rounded-xl border-2 border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-gray-200 focus:border-emerald-400 focus:ring-0 outline-none transition-colors">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">รหัสผ่านใหม่</label>
+                        <input type="password" name="new_password" id="new_password" required minlength="8"
+                               placeholder="อย่างน้อย 8 ตัวอักษร"
+                               class="w-full px-4 py-3 rounded-xl border-2 border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-gray-200 focus:border-emerald-400 focus:ring-0 outline-none transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">ยืนยันรหัสผ่านใหม่</label>
+                        <input type="password" name="new_password_confirmation" id="new_password_confirmation" required minlength="8"
+                               placeholder="กรอกอีกครั้งเพื่อยืนยัน"
+                               class="w-full px-4 py-3 rounded-xl border-2 border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-800 dark:text-gray-200 focus:border-emerald-400 focus:ring-0 outline-none transition-colors">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-lg font-bold py-4 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                        <i class="fa-solid fa-key mr-2"></i> เปลี่ยนรหัสผ่าน
                     </button>
                 </div>
             </form>

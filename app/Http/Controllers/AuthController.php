@@ -8,8 +8,13 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
+
 class AuthController extends Controller
 {
+    // ==========================================
+    // 🟢 โซนลูกค้า (Customer)
+    // ==========================================
+    
     public function showLogin(Request $request)
     {
         $request->session()->regenerateToken();
@@ -85,6 +90,10 @@ class AuthController extends Controller
         return redirect('/')->with('success', 'สมัครสมาชิกสำเร็จ! ยินดีต้อนรับครับ');
     }
 
+    // ==========================================
+    // 🔴 โซนหลังบ้าน (Admin, Staff, Driver)
+    // ==========================================
+
     public function showAdminLogin(Request $request)
     {
         // ไม่ต้อง regenerateToken ที่นี่ เพราะจะทำให้ token เก่าใช้ไม่ได้
@@ -105,20 +114,23 @@ class AuthController extends Controller
                 // Regenerate session เพื่อความปลอดภัย
                 $request->session()->regenerate();
                 
-                return redirect()->intended(route('admin.dashboard'))
+                // 🚨 แก้ไข: เอา ->intended() ออก บังคับวิ่งเข้า Dashboard ตรงๆ จะได้ไม่ติด 403
+                return redirect()->route('admin.dashboard')
                     ->with('success', 'เข้าสู่ระบบหลังบ้านสำเร็จ');
+
             } elseif ($user->role === 'driver') {
                 $request->session()->regenerate();
                 
-                return redirect()->intended(route('driver.dashboard'))
+                // 🚨 แก้ไข: เอา ->intended() ออก บังคับวิ่งเข้าหน้างานคนขับตรงๆ
+                return redirect()->route('driver.dashboard')
                     ->with('success', 'เข้าสู่ระบบคนขับสำเร็จ พร้อมลุยงาน!');
             }
             
-            // ถ้าเป็นลูกค้าหรือใครที่ไม่ใช่แอดมิน แอบมาเข้าประตูนี้ เตะออก!
+            // ถ้าเป็นลูกค้าแอบมาเข้าประตูนี้ เตะออก!
             Auth::logout();
 
             return back()->withErrors([
-                'username' => 'บัญชีนี้เป็นของลูกค้า กรุณาเข้าสู่ระบบที่หน้าลูกค้าครับ',
+                'username' => 'บัญชีนี้เป็นของลูกค้า กรุณาเข้าสู่ระบบที่หน้าของลูกค้าครับ',
             ])->onlyInput('username');
         }
 
@@ -127,15 +139,39 @@ class AuthController extends Controller
         ])->onlyInput('username');
     }
 
+    // ==========================================
+    // 🚪 โซนออกจากระบบ (Logout สำหรับทุกคน)
+    // ==========================================
+
+    // ==========================================
+    // 🚪 โซนออกจากระบบ (Logout แยกตาม Role)
+    // ==========================================
+
     public function logout(Request $request)
     {
-        Auth::logout();
+        // 1. จำ Role ไว้ก่อนที่จะล็อกเอาต์ (เพราะถ้าล็อกเอาต์แล้วจะดึง Auth::user() ไม่ได้)
+        $user = Auth::user();
+        
+        // กำหนดหน้าเริ่มต้นเป็นหน้าล็อกอินลูกค้า
+        $redirectRoute = 'login'; 
 
+        // ถ้าเป็นแก๊งหลังบ้าน (แอดมิน, พนักงาน, คนขับ) ให้เปลี่ยนเป้าหมายไปหน้า admin.login
+        if ($user && in_array($user->role, ['admin', 'staff', 'driver'], true)) {
+            $redirectRoute = 'admin.login';
+        }
+
+        // 2. ทำการล็อกเอาต์และทำลาย Session
+        Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('success', 'ออกจากระบบเรียบร้อยแล้ว');
+        // 3. เด้งกลับไปหน้าที่เตรียมไว้
+        return redirect()->route($redirectRoute)->with('success', 'ออกจากระบบเรียบร้อยแล้วครับ');
     }
+
+    // ==========================================
+    // 💬 โซนระบบ Login ด้วย LINE
+    // ==========================================
 
     // 1. ฟังก์ชันพาลูกค้าไปหน้ายืนยันตัวตนของ LINE
     public function redirectToLine()

@@ -40,30 +40,44 @@
                     </div>
                 @endif
 
-                <div class="h-full bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 border-2 {{ $isPopular ? 'border-pink-400 dark:border-pink-500 shadow-2xl shadow-pink-200 dark:shadow-none' : 'border-gray-100 dark:border-slate-700 shadow-sm' }} transition-all duration-300 hover:-translate-y-2 flex flex-col">
+                <div class="h-full bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 border-2 {{ $isPopular ? 'border-pink-400 dark:border-pink-500 shadow-2xl shadow-pink-200 dark:shadow-none' : 'border-gray-100 dark:border-slate-700 shadow-sm' }} transition-all duration-300 hover:-translate-y-2 flex flex-col relative overflow-hidden">
                     
-                    <div class="flex justify-between items-start mb-6">
-                        <div class="w-14 h-14 rounded-2xl {{ $isPopular ? 'bg-pink-500 text-white' : 'bg-pink-50 dark:bg-slate-700 text-pink-500' }} flex items-center justify-center text-2xl shadow-sm group-hover:rotate-6 transition-transform">
-                            @if($package->price <= 100)
-                                <i class="fa-solid fa-shirt"></i>
-                            @elseif($package->price <= 200)
-                                <i class="fa-solid fa-basket-shopping"></i>
+                    {{-- 🌟 เพิ่ม Effect แสงวิบวับเบาๆ ไว้เป็นพื้นหลังถ้าเป็นสินค้ายอดนิยม --}}
+                    @if($isPopular)
+                        <div class="absolute -right-10 -top-10 w-32 h-32 bg-pink-100 dark:bg-pink-900/20 opacity-50 rounded-full blur-2xl pointer-events-none"></div>
+                    @endif
+
+                    <div class="flex justify-between items-start mb-6 relative z-10">
+                        
+                        {{-- 🚨 อัปเดตส่วนแสดงผลรูปภาพแพ็กเกจ (แทนที่ไอคอนเก่า) --}}
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-3xl shadow-sm group-hover:rotate-6 transition-transform bg-white dark:bg-slate-700 border border-gray-100 dark:border-slate-600 overflow-hidden">
+                            @if ($package->image_path)
+                                {{-- ถ้ามีรูปที่อัปโหลดไว้ ให้โชว์รูป --}}
+                                <img src="{{ asset('storage/' . $package->image_path) }}" alt="{{ $package->name }}" class="w-full h-full object-cover">
                             @else
-                                <i class="fa-solid fa-jug-detergent"></i>
+                                {{-- ถ้าไม่มีรูป ให้โชว์ไอคอนเดิมเป็นตัวสำรอง --}}
+                                @if($package->price <= 100)
+                                    <i class="fa-solid fa-shirt text-pink-400"></i>
+                                @elseif($package->price <= 200)
+                                    <i class="fa-solid fa-basket-shopping text-pink-400"></i>
+                                @else
+                                    <i class="fa-solid fa-jug-detergent text-pink-400"></i>
+                                @endif
                             @endif
                         </div>
+                        
                         <div class="text-right">
                             <span class="text-sm text-gray-400 block">เริ่มต้นที่</span>
                             <span class="text-3xl font-black text-gray-800 dark:text-gray-100">฿{{ number_format($package->price) }}</span>
                         </div>
                     </div>
 
-                    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-3">{{ $package->name }}</h2>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-3 relative z-10">{{ $package->name }}</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-6 relative z-10">
                         {{ $package->description ?: 'บริการซัก อบ พับ พร้อมรับ-ส่งถึงบ้านอย่างสะดวกสบาย มั่นใจในความสะอาด' }}
                     </p>
 
-                    <ul class="space-y-3 mb-8 flex-grow">
+                    <ul class="space-y-3 mb-8 flex-grow relative z-10">
                         <li class="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
                             <i class="fa-solid fa-circle-check text-green-500"></i> ซักสะอาดด้วยน้ำยาพรีเมียม
                         </li>
@@ -73,14 +87,17 @@
                     </ul>
 
                     <a href="{{ route('customer.book') }}"
-                        class="w-full flex items-center justify-center gap-2 {{ $isPopular ? 'bg-gradient-to-r from-pink-500 to-rose-500' : 'bg-gray-800 dark:bg-slate-700' }} hover:scale-[1.02] active:scale-95 text-white font-bold py-4 rounded-2xl shadow-lg transition-all">
+                        class="w-full flex items-center justify-center gap-2 {{ $isPopular ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white' : 'bg-gray-800 dark:bg-slate-700 text-white' }} hover:scale-[1.02] active:scale-95 font-bold py-4 rounded-2xl shadow-lg transition-all relative z-10">
                         <i class="fa-solid fa-basket-shopping"></i>
                         จองคิวแพ็กเกจนี้
                     </a>
                 </div>
             </div>
         @empty
-            @endforelse
+            <div class="col-span-full text-center py-12">
+                <p class="text-gray-500 dark:text-gray-400 text-lg">ยังไม่มีแพ็กเกจให้บริการในขณะนี้</p>
+            </div>
+        @endforelse
     </div>
 </div>
 @endsection

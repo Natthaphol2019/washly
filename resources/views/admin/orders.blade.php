@@ -33,6 +33,105 @@
             </div>
         @endif
 
+        {{-- 🔍 Filter และ Search --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-5">
+            <form method="GET" action="{{ route('admin.orders.index') }}" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    
+                    {{-- ค้นหาเลขออเดอร์/ชื่อลูกค้า --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                            <i class="fa-solid fa-search"></i> ค้นหา
+                        </label>
+                        <input type="text" name="search" value="{{ request('search') }}" 
+                            placeholder="เลขออเดอร์ หรือ ชื่อลูกค้า"
+                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                    </div>
+
+                    {{-- กรองตามสถานะ --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                            <i class="fa-solid fa-filter"></i> สถานะ
+                        </label>
+                        <select name="status" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                            <option value="">ทั้งหมด</option>
+                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>รออนุมัติ</option>
+                            <option value="pending_pickup" {{ request('status') == 'pending_pickup' ? 'selected' : '' }}>รอรับผ้า</option>
+                            <option value="picking_up" {{ request('status') == 'picking_up' ? 'selected' : '' }}>กำลังไปรับ</option>
+                            <option value="picked_up" {{ request('status') == 'picked_up' ? 'selected' : '' }}>รับผ้ามาแล้ว</option>
+                            <option value="processing" {{ request('status') == 'processing' ? 'selected' : '' }}>กำลังซัก/อบ</option>
+                            <option value="washing_completed" {{ request('status') == 'washing_completed' ? 'selected' : '' }}>ซักเสร็จ/รอส่ง</option>
+                            <option value="delivering" {{ request('status') == 'delivering' ? 'selected' : '' }}>กำลังไปส่ง</option>
+                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>เสร็จสิ้น</option>
+                            <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>ยกเลิก</option>
+                        </select>
+                    </div>
+
+                    {{-- กรองตามการชำระเงิน --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                            <i class="fa-solid fa-credit-card"></i> การชำระเงิน
+                        </label>
+                        <select name="payment_status" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                            <option value="">ทั้งหมด</option>
+                            <option value="unpaid" {{ request('payment_status') == 'unpaid' ? 'selected' : '' }}>ยังไม่ชำระ</option>
+                            <option value="reviewing" {{ request('payment_status') == 'reviewing' ? 'selected' : '' }}>รอตรวจสลิป</option>
+                            <option value="pending_cash" {{ request('payment_status') == 'pending_cash' ? 'selected' : '' }}>รอเก็บเงินสด</option>
+                            <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>ชำระแล้ว</option>
+                        </select>
+                    </div>
+
+                    {{-- กรองตามวิธีชำระ --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                            <i class="fa-solid fa-wallet"></i> วิธีชำระ
+                        </label>
+                        <select name="payment_method" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                            <option value="">ทั้งหมด</option>
+                            <option value="transfer" {{ request('payment_method') == 'transfer' ? 'selected' : '' }}>โอนเงิน</option>
+                            <option value="cash" {{ request('payment_method') == 'cash' ? 'selected' : '' }}>เงินสด</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-3 pt-2">
+                    <button type="submit" class="bg-sky-500 hover:bg-sky-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-magnifying-glass"></i> ค้นหา
+                    </button>
+                    <a href="{{ route('admin.orders.index') }}" class="bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-left"></i> ล้างตัวกรอง
+                    </a>
+                    
+                    {{-- Sort --}}
+                    <div class="flex items-center gap-2 ml-auto">
+                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-400">เรียงตาม:</label>
+                        <select name="sort" onchange="this.form.submit()" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-sky-500 outline-none transition">
+                            <option value="created_at_desc" {{ request('sort') == 'created_at_desc' ? 'selected' : '' }}>ใหม่ → เก่า</option>
+                            <option value="created_at_asc" {{ request('sort') == 'created_at_asc' ? 'selected' : '' }}>เก่า → ใหม่</option>
+                            <option value="order_number_asc" {{ request('sort') == 'order_number_asc' ? 'selected' : '' }}>เลขออเดอร์ A-Z</option>
+                            <option value="total_price_desc" {{ request('sort') == 'total_price_desc' ? 'selected' : '' }}>ยอดเงินสูง → ต่ำ</option>
+                            <option value="total_price_asc" {{ request('sort') == 'total_price_asc' ? 'selected' : '' }}>ยอดเงินต่ำ → สูง</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        {{-- สรุปผลการค้นหา --}}
+        @if(request()->hasAny(['search', 'status', 'payment_status', 'payment_method']))
+            <div class="flex items-center justify-between text-sm bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800 px-4 py-2.5 rounded-xl">
+                <p class="text-sky-700 dark:text-sky-400">
+                    <i class="fa-solid fa-filter"></i> 
+                    กำลังแสดงผลลัพธ์ที่กรอง: 
+                    @if(request('search')) <span class="font-semibold">ค้นหา="{{ request('search') }}"</span> @endif
+                    @if(request('status')) <span class="font-semibold">สถานะ="{{ $statusLabels[request('status')] ?? request('status') }}"</span> @endif
+                    @if(request('payment_status')) <span class="font-semibold">ชำระเงิน="{{ request('payment_status') }}"</span> @endif
+                    @if(request('payment_method')) <span class="font-semibold">วิธีชำระ="{{ request('payment_method') }}"</span> @endif
+                </p>
+                <span class="text-sky-600 dark:text-sky-400 font-bold">{{ $orders->count() }} ออเดอร์</span>
+            </div>
+        @endif
+
         {{-- ตารางออเดอร์ --}}
         <div
             class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">

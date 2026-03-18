@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\DeliveryDistanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
@@ -34,7 +35,7 @@ class ProfileController extends Controller
         $user->fullname = $request->fullname;
         $user->phone = $request->phone;
         $user->address = $request->address;
-        
+
         // ถ้ามีการส่งพิกัดมา ก็อัปเดตด้วย
         $latitude = $deliveryDistanceService->normalizeCoordinate($request->input('latitude'), -90, 90);
         $longitude = $deliveryDistanceService->normalizeCoordinate($request->input('longitude'), -180, 180);
@@ -54,5 +55,36 @@ class ProfileController extends Controller
 
         // 5. เด้งกลับไปหน้าเดิม พร้อมส่งข้อความแจ้งเตือนว่าสำเร็จ
         return redirect()->back()->with('success', 'บันทึกข้อมูลโปรไฟล์เรียบร้อยแล้ว! 🌸');
+    }
+
+    /**
+     * เปลี่ยนรหัสผ่าน
+     */
+    public function changePassword(Request $request)
+    {
+        // 1. ตรวจสอบข้อมูล
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ], [
+            'current_password.required' => 'กรุณากรอกรหัสผ่านปัจจุบัน',
+            'new_password.required' => 'กรุณากรอกรหัสผ่านใหม่',
+            'new_password.min' => 'รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร',
+            'new_password.confirmed' => 'รหัสผ่านใหม่ไม่ตรงกัน',
+        ]);
+
+        $user = Auth::user();
+
+        // 2. เช็คว่ารหัสผ่านปัจจุบันถูกต้องหรือไม่
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'รหัสผ่านปัจจุบันไม่ถูกต้อง']);
+        }
+
+        // 3. อัปเดตรหัสผ่านใหม่
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        // 4. เด้งกลับไปหน้าเดิม พร้อมส่งข้อความแจ้งเตือน
+        return redirect()->back()->with('success', 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว! 🔐');
     }
 }

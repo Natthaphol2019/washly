@@ -16,12 +16,70 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400">จัดการรายชื่อผู้ส่งผ้าทั้งหมดในระบบ</p>
             </div>
         </div>
-        
-        <button onclick="document.getElementById('addDriverModal').classList.remove('hidden')" 
+
+        <button onclick="document.getElementById('addDriverModal').classList.remove('hidden')"
             class="washly-brand-btn px-5 py-2.5 rounded-xl text-sm font-semibold text-white shadow-lg shadow-sky-500/30 flex items-center gap-2 hover:brightness-110 transition">
             <i class="fa-solid fa-plus"></i> เพิ่มคนขับรถ
         </button>
     </div>
+
+    {{-- 🔍 Filter และ Search --}}
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-5">
+        <form method="GET" action="{{ route('admin.drivers.index') }}" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                
+                {{-- ค้นหาชื่อ/username --}}
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                        <i class="fa-solid fa-search"></i> ค้นหา
+                    </label>
+                    <input type="text" name="search" value="{{ request('search') }}" 
+                        placeholder="ชื่อ หรือ username..."
+                        class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                </div>
+
+                {{-- เรียงลำดับ --}}
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                        <i class="fa-solid fa-arrow-down-a-z"></i> เรียงตาม
+                    </label>
+                    <select name="sort" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                        <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }}>ชื่อ A-Z</option>
+                        <option value="name_desc" {{ request('sort') == 'name_desc' ? 'selected' : '' }}>ชื่อ Z-A</option>
+                        <option value="created_at_desc" {{ request('sort') == 'created_at_desc' ? 'selected' : '' }}>ใหม่ → เก่า</option>
+                        <option value="created_at_asc" {{ request('sort') == 'created_at_asc' ? 'selected' : '' }}>เก่า → ใหม่</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-3 pt-2">
+                <button type="submit" class="bg-sky-500 hover:bg-sky-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass"></i> ค้นหา
+                </button>
+                <a href="{{ route('admin.drivers.index') }}" class="bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-left"></i> ล้างตัวกรอง
+                </a>
+                
+                @if(request()->hasAny(['search', 'sort']))
+                    <div class="flex items-center gap-2 ml-auto text-xs text-gray-500 dark:text-gray-400">
+                        <span class="font-semibold text-sky-600 dark:text-sky-400">{{ $drivers->count() }}</span> คนขับ
+                    </div>
+                @endif
+            </div>
+        </form>
+    </div>
+
+    {{-- สรุปผลการค้นหา --}}
+    @if(request()->hasAny(['search']))
+        <div class="flex items-center justify-between text-sm bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800 px-4 py-2.5 rounded-xl">
+            <p class="text-sky-700 dark:text-sky-400">
+                <i class="fa-solid fa-filter"></i> 
+                กำลังแสดงผลลัพธ์ที่กรอง: 
+                @if(request('search')) <span class="font-semibold">ค้นหา="{{ request('search') }}"</span> @endif
+            </p>
+            <span class="text-sky-600 dark:text-sky-400 font-bold">{{ $drivers->count() }} คนขับ</span>
+        </div>
+    @endif
 
     {{-- ตารางรายชื่อคนขับ --}}
     <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">

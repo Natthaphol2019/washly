@@ -16,12 +16,8 @@
 
         <div class="bg-white dark:bg-slate-800 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 transition-colors relative z-10">
 
-            {{-- 🚨 อัปเดต: เพิ่ม enctype="multipart/form-data" เพื่อให้ส่งไฟล์รูปสลิปได้ --}}
-            <form action="{{ route('customer.book.store') }}" method="POST" enctype="multipart/form-data" class="lg:grid lg:grid-cols-12 lg:gap-6 xl:gap-8 pb-24 lg:pb-0" id="booking-form">
+            <form action="{{ route('customer.book.store') }}" method="POST" class="lg:grid lg:grid-cols-12 lg:gap-6 xl:gap-8 pb-24 lg:pb-0" id="booking-form">
                 @csrf
-
-                {{-- 🚨 ซ่อน Input สำหรับรับไฟล์สลิปไว้ตรงนี้ --}}
-                <input type="file" name="payment_slip" id="payment_slip" accept="image/jpeg,image/png,image/jpg" class="hidden">
 
                 @if ($errors->any())
                     <div class="lg:col-span-12 mb-4 md:mb-6 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-xl md:rounded-2xl p-4 md:p-5 shadow-sm">
@@ -50,12 +46,23 @@
                         <div class="mb-6 pl-0 md:pl-14">
                             <div class="flex overflow-x-auto pb-3 hide-scrollbar gap-2 -mx-1 px-1 sm:mx-0 sm:px-0 sm:flex-wrap">
                                 <button type="button" class="pkg-filter-btn shrink-0 whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold bg-pink-500 text-white border border-transparent shadow-sm transition-all" data-filter="all">ทั้งหมด</button>
+                                <button type="button" class="pkg-filter-btn shrink-0 whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all" data-filter="wash_dry">ซัก + อบ</button>
+                                <button type="button" class="pkg-filter-btn shrink-0 whitespace-nowrap px-5 py-2 rounded-full text-sm font-bold bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all" data-filter="wash_dry_fold">ซัก + อบ + พับ</button>
                             </div>
                         </div>
 
                         <div class="flex overflow-x-auto custom-scrollbar pb-6 pt-2 gap-5 pl-0 md:pl-14 snap-x">
                             @foreach ($packages as $package)
-                                <label class="cursor-pointer relative group block h-full shrink-0 w-[260px] md:w-[280px] snap-start package-card-wrapper" data-name="{{ $package->name }}">
+                                @php
+                                    $packageName = strtolower($package->name);
+                                    $packageType = 'all';
+                                    if (str_contains($packageName, 'พับ')) {
+                                        $packageType = 'wash_dry_fold';
+                                    } elseif (str_contains($packageName, 'อบ')) {
+                                        $packageType = 'wash_dry';
+                                    }
+                                @endphp
+                                <label class="cursor-pointer relative group block h-full shrink-0 w-[260px] md:w-[280px] snap-start package-card-wrapper" data-name="{{ $package->name }}" data-type="{{ $packageType }}">
                                     <input type="radio" name="package_id" value="{{ $package->id }}"
                                         data-package-price="{{ (float) $package->price }}"
                                         data-default-addon-name="{{ $packageDefaultAddonMap[$package->id] ?? '' }}"
@@ -368,11 +375,11 @@
                                 <div class="rounded-2xl border-2 border-gray-100 dark:border-slate-600 p-5 bg-gray-50/50 dark:bg-slate-700/30 peer-checked:border-pink-500 peer-checked:bg-pink-50/50 dark:peer-checked:bg-slate-700 hover:border-pink-300 transition-all duration-200 flex items-center justify-between group-hover:shadow-sm">
                                     <div class="flex items-center gap-4">
                                         <div class="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm text-blue-500">
-                                            <i class="fa-solid fa-qrcode text-2xl"></i>
+                                            <i class="fa-solid fa-building-columns text-2xl"></i>
                                         </div>
                                         <div>
-                                            <p class="font-bold text-gray-800 dark:text-gray-100">โอนเงิน / สแกน QR</p>
-                                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">แนบสลิปในระบบ</p>
+                                            <p class="font-bold text-gray-800 dark:text-gray-100">โอนเงิน</p>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">ชำระผ่านบัญชีธนาคาร</p>
                                         </div>
                                     </div>
                                     <i class="fa-solid fa-circle-check text-2xl text-pink-500 scale-0 opacity-0 peer-checked:scale-100 peer-checked:opacity-100 transition-all duration-300"></i>
@@ -387,7 +394,7 @@
                                             <i class="fa-solid fa-money-bill-wave text-xl"></i>
                                         </div>
                                         <div>
-                                            <p class="font-bold text-gray-800 dark:text-gray-100">เงินสดปลายทาง</p>
+                                            <p class="font-bold text-gray-800 dark:text-gray-100">เงินสด</p>
                                             <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">จ่ายกับไรเดอร์</p>
                                         </div>
                                     </div>
@@ -463,24 +470,6 @@
                                     <span class="font-bold text-sm md:text-base text-gray-700 dark:text-gray-200 pb-1">ยอดชำระสุทธิ</span>
                                     <span id="summary-total" class="text-2xl md:text-3xl font-black text-pink-600 dark:text-pink-400">฿0</span>
                                 </div>
-
-                                {{-- 💳 ปุ่มสแกน QR ชำระเงิน --}}
-                                <div class="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-dashed border-gray-200 dark:border-slate-600">
-                                    <button type="button" id="show-qr-btn" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-3 md:py-3.5 rounded-xl md:rounded-2xl shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 text-sm md:text-base" disabled>
-                                        <i class="fa-solid fa-qrcode text-base md:text-xl"></i>
-                                        <span>สแกน QR และแนบสลิป</span>
-                                    </button>
-
-                                    {{-- 🚨 ป้ายแจ้งเตือนเมื่อแนบสลิปสำเร็จ (จะโชว์เมื่อผู้ใช้เลือกไฟล์) --}}
-                                    <div id="slip-status-indicator" class="hidden mt-2 md:mt-3 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-lg md:rounded-xl p-2 text-center text-emerald-600 dark:text-emerald-400 text-xs md:text-sm font-bold shadow-sm">
-                                        <i class="fa-solid fa-circle-check"></i> แนบสลิปเรียบร้อยแล้ว
-                                        <span id="slip-file-name" class="text-[9px] md:text-[10px] font-normal block truncate mt-0.5 opacity-80"></span>
-                                    </div>
-
-                                    <p class="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
-                                        <i class="fa-solid fa-circle-info"></i> สแกน QR เพื่อชำระล่วงหน้า หรือเลือกจ่ายปลายทางก็ได้
-                                    </p>
-                                </div>
                             </div>
                         </div>
 
@@ -505,62 +494,6 @@
                         <button type="submit" class="bg-gradient-to-r from-pink-500 to-pink-600 text-white font-bold text-sm md:text-lg px-6 md:px-8 py-2.5 md:py-3.5 rounded-xl md:rounded-2xl shadow-lg shadow-pink-500/30 active:scale-95 transition-all w-1/2 flex items-center justify-center gap-1 md:gap-2">
                             จองคิวเลย
                         </button>
-                    </div>
-                </div>
-
-                {{-- 💳 Modal แสดง QR Code ชำระเงิน (ย้ายมาไว้ข้างใน Form เพื่อให้ควบคุมไฟล์ง่าย และแก้ Overflow) --}}
-                <div id="qr-payment-modal" style="z-index: 9999;" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-start sm:items-center justify-center p-4 overflow-y-auto">
-                    <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full animate-[fadeIn_0.2s_ease-out] my-8 sm:my-auto flex flex-col relative">
-                        <div class="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 flex items-center justify-between rounded-t-3xl shrink-0">
-                            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-qrcode"></i> ชำระเงินและแนบสลิป
-                            </h3>
-                            <button type="button" id="qr-modal-close" class="text-white/80 hover:text-white transition-colors">
-                                <i class="fa-solid fa-xmark text-2xl"></i>
-                            </button>
-                        </div>
-                        
-                        {{-- ส่วนเนื้อหาใน Modal ให้เลื่อนได้ --}}
-                        <div class="p-6 text-center overflow-y-auto custom-scrollbar max-h-[70vh]">
-                            <div class="bg-white p-4 rounded-2xl border-2 border-emerald-200 dark:border-slate-600 mb-4">
-                                <img src="{{ asset('qr-code.jpg') }}" alt="QR Code ชำระเงิน" class="w-full max-w-[250px] mx-auto rounded-lg shadow-sm">
-                            </div>
-                            
-                            <div class="mb-5">
-                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">ยอดชำระทั้งหมด</p>
-                                <p id="qr-amount" class="text-4xl font-black text-emerald-600 dark:text-emerald-400">฿0</p>
-                            </div>
-
-                            <button type="button" id="qr-copy-amount" class="w-full mb-6 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-bold py-3 rounded-2xl transition-all duration-300 flex justify-center items-center gap-2 border border-emerald-200 dark:border-emerald-800">
-                                <i class="fa-regular fa-copy"></i> คัดลอกยอดเงิน
-                            </button>
-
-                            {{-- 🚨 เพิ่มส่วนปุ่มและพรีวิวแนบสลิป --}}
-                            <div class="mt-6 pt-6 border-t border-dashed border-gray-200 dark:border-slate-600">
-                                <p class="font-bold text-gray-800 dark:text-gray-100 mb-3">อัปโหลดสลิปชำระเงิน</p>
-                                
-                                {{-- กล่องพรีวิวสลิป --}}
-                                <div id="slip-preview-container" class="hidden mb-4 relative rounded-xl border-2 border-emerald-200 overflow-hidden bg-emerald-50 p-2">
-                                    <img id="slip-preview-img" src="" class="w-full max-h-[300px] object-contain rounded-lg">
-                                    <button type="button" id="remove-slip-btn" class="absolute top-3 right-3 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-600 shadow-md">
-                                        <i class="fa-solid fa-xmark"></i>
-                                    </button>
-                                </div>
-
-                                {{-- ปุ่มคลิกเพื่อเลือกไฟล์ --}}
-                                <button type="button" id="trigger-slip-upload" class="w-full bg-sky-50 text-sky-600 border border-sky-200 border-dashed hover:bg-sky-100 font-bold py-4 rounded-2xl transition-all flex flex-col items-center justify-center gap-2">
-                                    <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
-                                    <span>คลิกเพื่อเลือกรูปสลิป</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        {{-- ส่วนปุ่มยืนยันท้าย Modal (ไม่โดนบังตอนเลื่อน) --}}
-                        <div class="p-4 border-t border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/80 rounded-b-3xl shrink-0">
-                            <button type="button" id="qr-modal-confirm-btn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-2xl transition-all duration-300 shadow-md">
-                                ยืนยันและปิดหน้าต่าง
-                            </button>
-                        </div>
                     </div>
                 </div>
 
@@ -933,9 +866,12 @@
                 btn.classList.add('bg-pink-500', 'text-white', 'border-transparent', 'shadow-sm');
                 const filterValue = btn.dataset.filter;
                 packageCards.forEach(card => {
-                    const name = card.dataset.name;
-                    if (filterValue === 'all') card.style.display = 'block';
-                    else card.style.display = name.includes(filterValue) ? 'block' : 'none';
+                    const packageType = card.dataset.type;
+                    if (filterValue === 'all') {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = packageType === filterValue ? 'block' : 'none';
+                    }
                 });
             });
         });
@@ -944,130 +880,5 @@
         enforceChemicalToggles();
         recalculateSummary();
         updateQueueDisplay();
-
-        {{-- ========================================== --}}
-        {{-- 💳 ระบบอัปโหลดสลิป & QR Code Modal --}}
-        {{-- ========================================== --}}
-        const showQrBtn = document.getElementById('show-qr-btn');
-        const qrModal = document.getElementById('qr-payment-modal');
-        
-        // องค์ประกอบไฟล์สลิป
-        const fileInput = document.getElementById('payment_slip');
-        const triggerUploadBtn = document.getElementById('trigger-slip-upload');
-        const slipPreviewContainer = document.getElementById('slip-preview-container');
-        const slipPreviewImg = document.getElementById('slip-preview-img');
-        const removeSlipBtn = document.getElementById('remove-slip-btn');
-        
-        const slipStatusIndicator = document.getElementById('slip-status-indicator');
-        const slipFileName = document.getElementById('slip-file-name');
-
-        // เมื่อกดปุ่มสแกน ให้เอายอดเงินมาใส่ใน Modal แล้วเปิดขึ้นมา
-        showQrBtn?.addEventListener('click', function(e) {
-            e.preventDefault();
-            if (currentGrandTotal > 0) {
-                document.getElementById('qr-amount').textContent = formatBaht(currentGrandTotal);
-                qrModal.classList.remove('hidden');
-                qrModal.classList.add('flex');
-            }
-        });
-
-        // ปิด Modal
-        function closeModal() {
-            qrModal.classList.add('hidden');
-            qrModal.classList.remove('flex');
-        }
-
-        document.getElementById('qr-modal-close')?.addEventListener('click', closeModal);
-        document.getElementById('qr-modal-confirm-btn')?.addEventListener('click', closeModal);
-        qrModal?.addEventListener('click', function(e) { if (e.target === qrModal) closeModal(); });
-
-        // ปุ่มกดก๊อปปี้ตัวเลข
-        document.getElementById('qr-copy-amount')?.addEventListener('click', function() {
-            const amountText = currentGrandTotal.toString();
-            navigator.clipboard.writeText(amountText).then(() => {
-                const btn = document.getElementById('qr-copy-amount');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> คัดลอกแล้ว!';
-                btn.classList.replace('text-emerald-700', 'text-green-600');
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.classList.replace('text-green-600', 'text-emerald-700');
-                }, 2000);
-            });
-        });
-
-        // 📷 ระบบอัปโหลดรูป
-        triggerUploadBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        fileInput.addEventListener('change', function() {
-            const file = this.files[0];
-            if (file) {
-                // โชว์ภาพตัวอย่างใน Modal
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    slipPreviewImg.src = e.target.result;
-                    slipPreviewContainer.classList.remove('hidden');
-                    triggerUploadBtn.classList.add('hidden');
-                }
-                reader.readAsDataURL(file);
-
-                // โชว์ป้ายเขียวๆ สรุปไว้หน้าข้างนอก
-                slipFileName.textContent = "(" + file.name + ")";
-                slipStatusIndicator.classList.remove('hidden');
-            }
-        });
-
-        removeSlipBtn.addEventListener('click', () => {
-            fileInput.value = ''; // ล้างค่าไฟล์
-            slipPreviewImg.src = '';
-            slipPreviewContainer.classList.add('hidden');
-            triggerUploadBtn.classList.remove('hidden');
-            
-            // ปิดป้ายเขียวๆ หน้าข้างนอก
-            slipStatusIndicator.classList.add('hidden');
-        });
-
-        // อัปเดตสถานะปุ่ม QR ให้ฉลาดและไม่งง
-        function updateQRButton() {
-            const btn = document.getElementById('show-qr-btn');
-            const slipIndicator = document.getElementById('slip-status-indicator');
-            const fileInput = document.getElementById('payment_slip');
-            
-            const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
-            const isTransfer = selectedPayment && selectedPayment.value === 'transfer';
-
-            if (btn) {
-                if (isTransfer) {
-                    // 1. ถ้าเลือกโอนเงิน ให้ "โชว์ปุ่มเสมอ" (ห้ามซ่อน)
-                    btn.classList.remove('hidden');
-                    
-                    // 2. เช็กว่าลูกค้ากดเลือกแพ็กเกจหรือยัง (ยอด > 0)
-                    if (currentGrandTotal > 0) {
-                        btn.disabled = false;
-                        btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                        
-                        // ถ้าแนบรูปมาแล้ว ให้โชว์ป้ายเขียวด้วย
-                        if (fileInput && fileInput.files.length > 0 && slipIndicator) {
-                            slipIndicator.classList.remove('hidden');
-                        }
-                    } else {
-                        // 3. ถ้ายังไม่เลือกแพ็กเกจ (ยอด 0 บาท) ให้ล็อกปุ่มไว้ (สีจาง) แต่ห้ามซ่อน
-                        btn.disabled = true;
-                        btn.classList.add('opacity-50', 'cursor-not-allowed');
-                        if (slipIndicator) slipIndicator.classList.add('hidden');
-                    }
-                } else {
-                    // 4. ถ้าเลือกจ่าย "เงินสด" ค่อยซ่อนปุ่มสแกน QR ทิ้งไป
-                    btn.classList.add('hidden');
-                    if (slipIndicator) slipIndicator.classList.add('hidden');
-                }
-            }
-        }
-
-        document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
-            radio.addEventListener('change', updateQRButton);
-        });
     </script>
 @endsection

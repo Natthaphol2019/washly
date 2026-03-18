@@ -89,6 +89,7 @@ class OrderController extends Controller
             // สร้าง Log ว่ามีการแนบสลิป
             OrderLog::create([
                 'order_id' => $order->id,
+                'user_id' => Auth::id(), // 👈 เติมบรรทัดนี้เข้ามาครับ!
                 'old_status' => $order->status,
                 'new_status' => $order->status,
                 'note' => 'ลูกค้าอัปโหลดสลิปชำระเงิน (รอแอดมินตรวจสอบ)'
